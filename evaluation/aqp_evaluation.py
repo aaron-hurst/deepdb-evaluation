@@ -8,6 +8,7 @@ import numpy as np
 import math
 
 from ensemble_compilation.physical_db import DBConnection
+from ensemble_compilation.physical_db_ss import DBConnectionSS
 from ensemble_compilation.spn_ensemble import read_ensemble
 from evaluation.utils import parse_query, save_csv
 
@@ -23,7 +24,19 @@ class ApproachType(Enum):
     STRATIFIED_SAMPLING = 5
 
 
-def compute_ground_truth(target_path, physical_db_name, vacuum=False, query_filename=None, query_list=None):
+def compute_ground_truth(
+    target_path,
+    physical_db_name,
+    db_type="postgress",
+    db_server_id=None,
+    db_user="postgres",
+    db_password="postgres",
+    db_host="localhost",
+    db_port="5432",
+    vacuum=False,
+    query_filename=None,
+    query_list=None,
+):
     """
     Queries database for each query and stores result rows in dictionary.
     :param query_filename: where to take queries from
@@ -32,7 +45,23 @@ def compute_ground_truth(target_path, physical_db_name, vacuum=False, query_file
     :return:
     """
 
-    db_connection = DBConnection(db=physical_db_name)
+    # Establish database connection
+    if db_type == "postgress":
+        db_connection = DBConnection(
+            db_user=db_user,
+            db_password=db_password,
+            db_host=db_host,
+            db_port=db_port,
+            db=physical_db_name,
+        )
+    elif db_type == "ss":
+        db_connection = DBConnectionSS(
+            db_server_id,
+            physical_db_name,
+        )
+    else:
+        raise ValueError(f"Database type not supported: {db_type}")
+
     # read all queries
     if query_list is not None:
         queries = query_list
@@ -91,7 +120,7 @@ def compute_relative_error(true, predicted, debug=False):
 def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema, ground_truth_path,
                          rdc_spn_selection, pairwise_rdc_path, max_variants=5, merge_indicator_exp=False,
                          exploit_overlapping=False, min_sample_ratio=0, debug=False,
-                         show_confidence_intervals=True):
+                         show_confidence_intervals=True, confidence_sample_size=None):
     """
     Loads ensemble and computes metrics for AQP query evaluation
     :param ensemble_location:
@@ -128,7 +157,8 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                                                                        max_variants=max_variants,
                                                                        exploit_overlapping=exploit_overlapping,
                                                                        debug=debug,
-                                                                       confidence_intervals=show_confidence_intervals)
+                                                                       confidence_intervals=show_confidence_intervals,
+                                                                       confidence_sample_size=confidence_sample_size)
         aqp_end_t = perf_counter()
         latency = aqp_end_t - aqp_start_t
         logger.info(f"\t\t{'total_time:':<32}{latency} secs")

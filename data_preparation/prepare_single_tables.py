@@ -8,11 +8,11 @@ import pandas as pd
 logger = logging.getLogger(__name__)
 
 
-def read_table_csv(table_obj, csv_seperator=','):
+def read_table_csv(table_obj, csv_seperator=',', csv_header=None):
     """
     Reads csv from path, renames columns and drops unnecessary columns
     """
-    df_rows = pd.read_csv(table_obj.csv_file_location, header=None, escapechar='\\', encoding='utf-8', quotechar='"',
+    df_rows = pd.read_csv(table_obj.csv_file_location, header=csv_header, escapechar='\\', encoding='utf-8', quotechar='"',
                           sep=csv_seperator)
     df_rows.columns = [table_obj.table_name + '.' + attr for attr in table_obj.attributes]
 
@@ -37,7 +37,7 @@ def find_relationships(schema_graph, table, incoming=True):
 
 
 def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv_seperator=',',
-                         max_table_data=20000000):
+                         csv_header=None, max_table_data=20000000):
     """
     Reads table csv. Adds multiplier fields, missing value imputation, dict for categorical data. Adds null tuple tables.
 
@@ -47,7 +47,7 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
     """
     table_meta_data = dict()
     table_obj = schema_graph.table_dictionary[table]
-    table_data = read_table_csv(table_obj, csv_seperator=csv_seperator)
+    table_data = read_table_csv(table_obj, csv_seperator=csv_seperator, csv_header=csv_header)
     table_sample_rate = table_obj.sample_rate
 
     relevant_attributes = [x for x in table_obj.attributes if x not in table_obj.irrelevant_attributes]
@@ -93,7 +93,7 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
         left_attribute = table + '.' + relationship_obj.end_attr
         right_attribute = neighbor_table + '.' + relationship_obj.start_attr
 
-        neighbor_table_data = read_table_csv(neighbor_table_obj, csv_seperator=csv_seperator).set_index(right_attribute,
+        neighbor_table_data = read_table_csv(neighbor_table_obj, csv_seperator=csv_seperator, csv_header=csv_header).set_index(right_attribute,
                                                                                                         drop=False)
         table_data = table_data.set_index(left_attribute, drop=False)
 
@@ -232,7 +232,7 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
         right_attribute = neighbor_table + '.' + relationship_obj.start_attr
 
         table_data = table_data.set_index(left_attribute, drop=False)
-        neighbor_table_data = read_table_csv(neighbor_table_obj, csv_seperator=csv_seperator).set_index(right_attribute,
+        neighbor_table_data = read_table_csv(neighbor_table_obj, csv_seperator=csv_seperator, csv_header=csv_header).set_index(right_attribute,
                                                                                                         drop=False)
         null_tuples = table_data.join(neighbor_table_data, how='left')
         null_tuples = null_tuples.loc[null_tuples[neighbor_primary_key].isna(),
@@ -252,14 +252,14 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
     return table_meta_data
 
 
-def prepare_all_tables(schema_graph, path, csv_seperator=',', max_table_data=20000000):
+def prepare_all_tables(schema_graph, path, csv_seperator=',', csv_header=None, max_table_data=20000000):
     prep_start_t = perf_counter()
     meta_data = {}
     for table_obj in schema_graph.tables:
         table = table_obj.table_name
         logger.info("Preparing hdf file for table {}".format(table))
         meta_data[table] = prepare_single_table(schema_graph, table, path + '/' + table + '.hdf',
-                                                csv_seperator=csv_seperator, max_table_data=max_table_data)
+                                                csv_seperator=csv_seperator, csv_header=csv_header, max_table_data=max_table_data)
 
     with open(path + '/meta_data.pkl', 'wb') as f:
         pickle.dump(meta_data, f, pickle.HIGHEST_PROTOCOL)
