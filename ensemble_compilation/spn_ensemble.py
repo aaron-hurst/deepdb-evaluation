@@ -725,7 +725,8 @@ class SPNEnsemble:
                        dry_run=False, merge_indicator_exp=True, max_variants=10,
                        exploit_overlapping=False, debug=False, display_intermediate_results=False,
                        exploit_incoming_multipliers=True, confidence_intervals=False,
-                       confidence_sample_size=None, return_expectation=False):
+                       confidence_sample_size=None, return_expectation=False,
+                       confidence_interval_alpha=0.95):
         """
         Evaluates any query with or without a group by.
         :param query:
@@ -830,9 +831,9 @@ class SPNEnsemble:
             #     bernoulli_stds = full_join_size * np.sqrt(bernoulli_p * (1 - bernoulli_p) / 10000000)
             #     cardinality_stds = np.clip(cardinality_stds, bernoulli_stds, np.inf)
 
-        def build_confidence_interval(prediction, confidence_interval_std):
+        def build_confidence_interval(prediction, confidence_interval_std, alpha=0.95):
 
-            z_factor = scipy.stats.norm.ppf(0.95)
+            z_factor = scipy.stats.norm.ppf(alpha)
             lower_bound = prediction - z_factor * confidence_interval_std.item()
             upper_bound = prediction + z_factor * confidence_interval_std.item()
 
@@ -840,7 +841,7 @@ class SPNEnsemble:
 
         if query.query_type == QueryType.CARDINALITY:
             if confidence_intervals:
-                return build_confidence_interval(cardinalities, cardinality_stds), cardinalities
+                return build_confidence_interval(cardinalities, cardinality_stds, alpha=confidence_interval_alpha), cardinalities
             return None, cardinalities
 
         result_values = None
@@ -939,14 +940,14 @@ class SPNEnsemble:
 
                 for i in range(confidence_interval_stds.shape[0]):
                     confidence_values.append(
-                        build_confidence_interval(result_values[i][-1], confidence_interval_stds[i]))
+                        build_confidence_interval(result_values[i][-1], confidence_interval_stds[i], alpha=confidence_interval_alpha))
                 return confidence_values, result_tuples
 
             return None, result_tuples
 
         # if no group by queries return single value
         if confidence_intervals:
-            return build_confidence_interval(result_values, confidence_interval_stds), result_values
+            return build_confidence_interval(result_values, confidence_interval_stds, alpha=confidence_interval_alpha), result_values
 
         if return_expectation:
             return None, result_values, expectation_spn, expectation
@@ -1303,7 +1304,10 @@ class SPNEnsemble:
                     first_spn = spn
                     conditions = spn.relevant_conditions(query)
                     normalizing_multipliers = spn.compute_multipliers(query)
-                    expectation = Expectation(features, normalizing_multipliers, conditions, spn=first_spn)
+                    if all_operations_of_type(AggregationType.COUNT, query):
+                        expectation = Expectation(features, normalizing_multipliers, conditions, spn=first_spn, min_val=1)
+                    else:
+                        expectation = Expectation(features, normalizing_multipliers, conditions, spn=first_spn)
 
         assert first_spn is not None, "Did not find SPN offering all features"
 

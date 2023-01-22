@@ -31,7 +31,7 @@ numexpr==2.7.1
 numpy==1.18.3
 packaging==20.3
 pandas==1.0.3
-patsy==0.5.1
+patsy==0.5.3
 # pkg-resources==0.0.0
 pluggy==0.13.1
 psycopg2==2.8.5
@@ -45,11 +45,11 @@ pyparsing==2.4.7
 pytest==5.4.1
 python-dateutil==2.8.1
 pytz==2019.3
-scikit-learn==0.22.2.post1
+scikit-learn==0.24.2
 scipy==1.4.1
 SecretStorage==3.1.2
 six==1.14.0
-sklearn==0.0
+# sklearn==0.0
 # spflow==0.0.40
 sqlparse==0.3.1
 statsmodels==0.11.1

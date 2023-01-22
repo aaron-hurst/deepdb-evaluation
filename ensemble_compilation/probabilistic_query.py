@@ -102,12 +102,12 @@ class Expectation:
     Represents conditional expectation of feature with normalizing multipliers.
     """
 
-    def __init__(self, features, normalizing_multipliers, conditions, spn=None):
+    def __init__(self, features, normalizing_multipliers, conditions, spn=None, min_val=None):
         self.features = features
         self.normalizing_multipliers = normalizing_multipliers
         self.conditions = conditions
         self.spn = spn
-        self.min_val = 1
+        self.min_val = min_val
 
     def matches(self, other_expectation, ignore_spn=False):
         if set(self.features) != set(other_expectation.features):

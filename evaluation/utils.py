@@ -63,7 +63,7 @@ def _parse_aggregation(alias_dict, function, query, schema):
         query.add_aggregation_operation((AggregationOperationType.AGGREGATION, AggregationType.COUNT, []))
         return
     else:
-        raise Exception(f"Unknown operator: {operator.normalized} ")
+        raise NotImplementedError(f"Unknown operator: {operator.normalized} ")
     operand_parantheses = [token for token in function if isinstance(token, sqlparse.sql.Parenthesis)]
     assert len(operand_parantheses) == 1
     operand_parantheses = operand_parantheses[0]
