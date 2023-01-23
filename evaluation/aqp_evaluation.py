@@ -157,7 +157,7 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         except NotImplementedError:
             logger.debug(f"Aggregation not implemented for query {query_no}: {query_str}")
             continue
-        logger.info(f"Query {query_no}: {query_str}")
+        logger.debug(f"Query {query_no}: {query_str}")
         aqp_start_t = perf_counter()
         confidence_intervals, aqp_result = spn_ensemble.evaluate_query(query, rdc_spn_selection=rdc_spn_selection,
                                                                        pairwise_rdc_path=pairwise_rdc_path,
@@ -182,7 +182,7 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
 
                 logger.debug(f"\t\t{'total_bins: ':<32}{total_bins}")
                 logger.debug(f"\t\t{'bin_completeness: ':<32}{bin_completeness * 100:.2f}%")
-                logger.info(f"\t\t{'average_relative_error: ':<32}{average_relative_error * 100:.2f}%")
+                logger.debug(f"\t\t{'average_relative_error: ':<32}{average_relative_error * 100:.2f}%")
                 logger.debug(f"\t\t{'false_bin_percentage: ':<32}{false_bin_percentage * 100:.2f}%")
                 if show_confidence_intervals:
                     logger.debug(
@@ -194,11 +194,11 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                 true_result = true_result[0][0]
                 predicted_value = aqp_result
 
-                logger.info(f"\t\t{'predicted:':<32}{predicted_value}")
-                logger.info(f"\t\t{'true:':<32}{true_result}")
+                logger.debug(f"\t\t{'predicted:':<32}{predicted_value}")
+                logger.debug(f"\t\t{'true:':<32}{true_result}")
                 logger.debug(f"\t\t{'confidence_interval:':<32}{confidence_intervals}")
                 relative_error = compute_relative_error(true_result, predicted_value)
-                logger.info(f"\t\t{'relative_error:':<32}{relative_error * 100:.2f}%")
+                logger.debug(f"\t\t{'relative_error:':<32}{relative_error * 100:.2f}%")
                 if show_confidence_intervals:
                     true_value_in_confidence_interval, confidence_interval_length = evaluate_confidence_interval(
                         confidence_intervals,
@@ -227,7 +227,7 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                             #  'sample_percentage': 100
                              })
         else:
-            logger.info(f"\t\tpredicted: {aqp_result}")
+            logger.debug(f"\t\tpredicted: {aqp_result}")
         
         n_queries_executed = n_queries_executed + 1
 

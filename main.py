@@ -10,15 +10,15 @@ from evaluation.aqp_evaluation import evaluate_aqp_queries
 from schemas.aqp_datasets.schema import get_schema
 
 LOGGING_LEVEL = logging.INFO
-HDF_FILES_GENERATED = True
-ENSEMBLE_GENERATED = True
+HDF_FILES_GENERATED = False
+ENSEMBLE_GENERATED = False
 GROUND_TRUTH_COMPUTED = True
 DATA_SOURCE = "uci"
 DATASET_ID = "household_power_consumption"
-QUERIES_SET = "uci-household_power_consumption-N=100_small"
+QUERIES_SET = "uci-household_power_consumption-N=100"
 DATABASE_NAME = "uci_household_power_consumption"
-MAX_ROWS_PER_HDF_FILE = 100000000
-SAMPLES_PER_SPN = 10000000
+MAX_ROWS_PER_HDF_FILE = 10000000
+SAMPLES_PER_SPN = 1000000
 CONFIDENCE_INTERVAL_ALPHA = 0.99
 BLOOM_FILTERS = False
 RDC_THRESHOLD = 0.3
@@ -119,6 +119,7 @@ def main():
     t_ground_truth = perf_counter() - t_ground_truth_start
 
     # Read pre-trained ensemble and evaluate AQP queries
+    logger.info("Evaluating queries")
     t_queries_start = perf_counter()
     n_queries = evaluate_aqp_queries(
         ensemble_filepath,
@@ -175,11 +176,11 @@ def main():
         f.write(f"SHOW_CONFIDENCE_INTERVALS    {SHOW_CONFIDENCE_INTERVALS}\n")
 
         f.write(f"\n------------- Runtime -------------\n")
-        f.write(f"Generate HDF files           {t_generate_hdf:.6f} s\n")
-        f.write(f"Generate SPN ensembles       {t_generate_ensemble:.6f} s\n")
-        f.write(f"Total construction time      {t_construction:.6f} s\n")
-        f.write(f"Compute ground truth         {t_ground_truth:.6f} s\n")
-        f.write(f"Run queries                  {t_queries:.6f} s\n")
+        f.write(f"Generate HDF files           {t_generate_hdf:.3f} s\n")
+        f.write(f"Generate SPN ensembles       {t_generate_ensemble:.3f} s\n")
+        f.write(f"Total construction time      {t_construction:.3f} s\n")
+        f.write(f"Compute ground truth         {t_ground_truth:.3f} s\n")
+        f.write(f"Run queries                  {t_queries:.3f} s\n")
         f.write(f"Queries executed             {n_queries}\n")
         f.write(f"Mean latency                 {t_queries / n_queries:.6f} s\n")
 
