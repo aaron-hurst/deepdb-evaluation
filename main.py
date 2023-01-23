@@ -1,3 +1,4 @@
+from time import perf_counter
 import logging
 import os
 
@@ -51,16 +52,21 @@ def main():
     )
     ground_truth_path = os.path.join("aqp_evaluation", "ground_truth", dataset_full_id)
     ground_truth_filepath = os.path.join(ground_truth_path, QUERIES_SET + ".pkl")
-    results_path = os.path.join("aqp_evaluation", "results", dataset_full_id)
-    results_filepath = os.path.join(
-        results_path, QUERIES_SET + "_" + str(SAMPLES_PER_SPN) + ".csv"
+    results_path = os.path.join(
+        "aqp_evaluation",
+        "results",
+        dataset_full_id,
+        QUERIES_SET + "_" + str(SAMPLES_PER_SPN),
     )
+    results_filepath = os.path.join(results_path, "results.csv")
+    info_filepath = os.path.join(results_path, "info.txt")
 
     # Generate database schema
     logger.info("Generating schema.")
     schema = get_schema(DATA_SOURCE, DATASET_ID, csv_path)
 
     # Generate HDF files for simpler sampling
+    t_generate_hdf_start = perf_counter()
     if not HDF_FILES_GENERATED:
         logger.info(f"Generate HDF files for {DATASET_ID} and store in path {hdf_path}")
         os.makedirs(hdf_path, exist_ok=True)
@@ -72,8 +78,10 @@ def main():
             max_table_data=MAX_ROWS_PER_HDF_FILE,
         )
         logger.info("HDF files successfully created")
+    t_generate_hdf = perf_counter() - t_generate_hdf_start
 
     # Generate ensemble
+    t_generate_ensemble_start = perf_counter()
     if not ENSEMBLE_GENERATED:
         logger.info(f"Generate ensemble and store in path {ensemble_path}")
         os.makedirs(ensemble_path, exist_ok=True)
@@ -89,8 +97,10 @@ def main():
             POST_SAMPLING_FACTOR,
             incremental_learning_rate=INCREMENTAL_LEARNING_RATE,
         )
+    t_generate_ensemble = perf_counter() - t_generate_ensemble_start
 
     # Compute ground truth for AQP queries
+    t_ground_truth_start = perf_counter()
     if not GROUND_TRUTH_COMPUTED:
         logger.info("Computing ground truth")
         os.makedirs(ground_truth_path, exist_ok=True)
@@ -106,9 +116,11 @@ def main():
             query_filename=query_filepath,
         )
         logger.info("Ground truth completed")
+    t_ground_truth = perf_counter() - t_ground_truth_start
 
     # Read pre-trained ensemble and evaluate AQP queries
-    evaluate_aqp_queries(
+    t_queries_start = perf_counter()
+    n_queries = evaluate_aqp_queries(
         ensemble_filepath,
         query_filepath,
         results_filepath,
@@ -125,9 +137,57 @@ def main():
         confidence_sample_size=SAMPLES_PER_SPN,
         confidence_interval_alpha=CONFIDENCE_INTERVAL_ALPHA,
     )
+    t_queries = perf_counter() - t_queries_start
 
     # Read pre-trained ensemble and evaluate the confidence intervals
     # TODO ... or maybe not relevant?
+
+    # Get file sizes
+    s_original = schema.tables[0].table_size * len(schema.tables[0].attributes) * 4
+    s_hdf = os.stat(os.path.join(hdf_path, DATASET_ID + ".hdf")).st_size
+    s_ensemble = os.stat(ensemble_filepath).st_size
+
+    # Export parameters and statistics
+    t_construction = t_generate_hdf + t_generate_ensemble
+    os.makedirs(os.path.dirname(info_filepath), exist_ok=True)
+    logger.info(f"Saving experiment parameters and statistics to {info_filepath}")
+    with open(info_filepath, "w", newline="") as f:
+        f.write(f"------------- Parameters -------------\n")
+        f.write(f"HDF_FILES_GENERATED          {HDF_FILES_GENERATED}\n")
+        f.write(f"ENSEMBLE_GENERATED           {ENSEMBLE_GENERATED}\n")
+        f.write(f"GROUND_TRUTH_COMPUTED        {GROUND_TRUTH_COMPUTED}\n")
+        f.write(f"DATA_SOURCE                  {DATA_SOURCE}\n")
+        f.write(f"DATASET_ID                   {DATASET_ID}\n")
+        f.write(f"QUERIES_SET                  {QUERIES_SET}\n")
+        f.write(f"DATABASE_NAME                {DATABASE_NAME}\n")
+        f.write(f"MAX_ROWS_PER_HDF_FILE        {MAX_ROWS_PER_HDF_FILE}\n")
+        f.write(f"SAMPLES_PER_SPN              {SAMPLES_PER_SPN}\n")
+        f.write(f"CONFIDENCE_INTERVAL_ALPHA    {CONFIDENCE_INTERVAL_ALPHA}\n")
+        f.write(f"BLOOM_FILTERS                {BLOOM_FILTERS}\n")
+        f.write(f"RDC_THRESHOLD                {RDC_THRESHOLD}\n")
+        f.write(f"POST_SAMPLING_FACTOR         {POST_SAMPLING_FACTOR}\n")
+        f.write(f"INCREMENTAL_LEARNING_RATE    {INCREMENTAL_LEARNING_RATE}\n")
+        f.write(f"RDC_SPN_SELECTION            {RDC_SPN_SELECTION}\n")
+        f.write(f"PAIRWISE_RDC_PATH            {PAIRWISE_RDC_PATH}\n")
+        f.write(f"MAX_VARIANTS                 {MAX_VARIANTS}\n")
+        f.write(f"MERGE_INDICATOR_EXP          {MERGE_INDICATOR_EXP}\n")
+        f.write(f"EXPLOIT_OVERLAPPING          {EXPLOIT_OVERLAPPING}\n")
+        f.write(f"SHOW_CONFIDENCE_INTERVALS    {SHOW_CONFIDENCE_INTERVALS}\n")
+
+        f.write(f"\n------------- Runtime -------------\n")
+        f.write(f"Generate HDF files           {t_generate_hdf:.6f} s\n")
+        f.write(f"Generate SPN ensembles       {t_generate_ensemble:.6f} s\n")
+        f.write(f"Total construction time      {t_construction:.6f} s\n")
+        f.write(f"Compute ground truth         {t_ground_truth:.6f} s\n")
+        f.write(f"Run queries                  {t_queries:.6f} s\n")
+        f.write(f"Queries executed             {n_queries}\n")
+        f.write(f"Mean latency                 {t_queries / n_queries:.6f} s\n")
+
+        f.write(f"\n------------- Storage -------------\n")
+        f.write(f"Original data                {s_original:,d}\n")
+        f.write(f"HDF files                    {s_hdf:,d}\n")
+        f.write(f"SPN ensembles                {s_ensemble:,d}\n")
+        f.write(f"SPN ensembles (%)            {s_ensemble / s_original * 100:.2f} %\n")
 
 
 if __name__ == "__main__":

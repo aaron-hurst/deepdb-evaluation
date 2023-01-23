@@ -141,6 +141,7 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
 
     spn_ensemble = read_ensemble(ensemble_location, build_reverse_dict=True)
     csv_rows = []
+    n_queries_executed = 0
 
     # read all queries
     with open(query_filename) as f:
@@ -227,8 +228,12 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                              })
         else:
             logger.info(f"\t\tpredicted: {aqp_result}")
+        
+        n_queries_executed = n_queries_executed + 1
 
     save_csv(csv_rows, target_path)
+
+    return n_queries_executed
 
 
 def evaluate_confidence_interval(confidence_interval, true_result, predicted):
