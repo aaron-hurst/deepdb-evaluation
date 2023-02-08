@@ -10,9 +10,8 @@ from evaluation.aqp_evaluation import evaluate_aqp_queries
 from schemas.aqp_datasets.schema import get_schema
 
 LOGGING_LEVEL = logging.INFO
-HDF_FILES_GENERATED = False
-ENSEMBLE_GENERATED = False
-GROUND_TRUTH_COMPUTED = True
+GENERATE_HDF_FILES = True  # force creation of new HDF files
+GENERATE_ENSEMBLE = True  # forve creation of new ensembles
 DATA_SOURCE = "uci"
 DATASET_ID = "household_power_consumption"
 QUERIES_SET = "uci-household_power_consumption-N=100"
@@ -45,11 +44,10 @@ def main():
         dataset_full_id,
         dataset_full_id + "_" + str(MAX_ROWS_PER_HDF_FILE),
     )
+    hdf_filename = dataset_full_id + ".hdf"
     ensemble_path = os.path.join("evaluation_files", "spn_ensembles", dataset_full_id)
-    ensemble_filepath = os.path.join(
-        ensemble_path,
-        "ensemble_single_" + dataset_full_id + "_" + str(SAMPLES_PER_SPN) + ".pkl",
-    )
+    ensemble_filename = f"ensemble_single_{dataset_full_id}_{SAMPLES_PER_SPN}.pkl"
+    ensemble_filepath = os.path.join(ensemble_path, ensemble_filename)
     ground_truth_path = os.path.join("evaluation_files", "ground_truth", dataset_full_id)
     ground_truth_filepath = os.path.join(ground_truth_path, QUERIES_SET + ".pkl")
     results_path = os.path.join(
@@ -67,8 +65,8 @@ def main():
 
     # Generate HDF files for simpler sampling
     t_generate_hdf_start = perf_counter()
-    if not HDF_FILES_GENERATED:
-        logger.info(f"Generate HDF files for {DATASET_ID} and store in path {hdf_path}")
+    if GENERATE_HDF_FILES or (hdf_filename not in os.listdir(hdf_path)):
+        logger.info(f"Generate HDF files for {DATASET_ID}")
         os.makedirs(hdf_path, exist_ok=True)
         prepare_all_tables(
             schema,
@@ -82,8 +80,8 @@ def main():
 
     # Generate ensemble
     t_generate_ensemble_start = perf_counter()
-    if not ENSEMBLE_GENERATED:
-        logger.info(f"Generate ensemble and store in path {ensemble_path}")
+    if GENERATE_ENSEMBLE or (ensemble_filename not in os.listdir(ensemble_path)):
+        logger.info(f"Generate SPN ensemble.")
         os.makedirs(ensemble_path, exist_ok=True)
         create_naive_all_split_ensemble(
             schema,
@@ -100,8 +98,7 @@ def main():
     t_generate_ensemble = perf_counter() - t_generate_ensemble_start
 
     # Compute ground truth for AQP queries
-    t_ground_truth_start = perf_counter()
-    if not GROUND_TRUTH_COMPUTED:
+    if os.path.basename(ground_truth_filepath) not in os.listdir(ground_truth_path):
         logger.info("Computing ground truth")
         os.makedirs(ground_truth_path, exist_ok=True)
         compute_ground_truth(
@@ -116,7 +113,6 @@ def main():
             query_filename=query_filepath,
         )
         logger.info("Ground truth completed")
-    t_ground_truth = perf_counter() - t_ground_truth_start
 
     # Read pre-trained ensemble and evaluate AQP queries
     logger.info("Evaluating queries")
@@ -140,12 +136,9 @@ def main():
     )
     t_queries = perf_counter() - t_queries_start
 
-    # Read pre-trained ensemble and evaluate the confidence intervals
-    # TODO ... or maybe not relevant?
-
     # Get file sizes
     s_original = schema.tables[0].table_size * len(schema.tables[0].attributes) * 4
-    s_hdf = os.stat(os.path.join(hdf_path, DATASET_ID + ".hdf")).st_size
+    s_hdf = os.stat(os.path.join(hdf_path, hdf_filename)).st_size
     s_ensemble = os.stat(ensemble_filepath).st_size
 
     # Export parameters and statistics
