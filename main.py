@@ -179,15 +179,14 @@ def main():
         f.write(f"Generate HDF files           {t_generate_hdf:.3f} s\n")
         f.write(f"Generate SPN ensembles       {t_generate_ensemble:.3f} s\n")
         f.write(f"Total construction time      {t_construction:.3f} s\n")
-        f.write(f"Compute ground truth         {t_ground_truth:.3f} s\n")
         f.write(f"Run queries                  {t_queries:.3f} s\n")
         f.write(f"Queries executed             {n_queries}\n")
         f.write(f"Mean latency                 {t_queries / n_queries:.6f} s\n")
 
         f.write(f"\n------------- Storage -------------\n")
-        f.write(f"Original data                {s_original:,d}\n")
-        f.write(f"HDF files                    {s_hdf:,d}\n")
-        f.write(f"SPN ensembles                {s_ensemble:,d}\n")
+        f.write(f"Original data                {s_original:,d} bytes\n")
+        f.write(f"HDF files                    {s_hdf:,d} bytes\n")
+        f.write(f"SPN ensembles                {s_ensemble:,d} bytes\n")
         f.write(f"SPN ensembles (%)            {s_ensemble / s_original * 100:.2f} %\n")
 
 
