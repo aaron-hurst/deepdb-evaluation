@@ -2,7 +2,7 @@ from time import perf_counter
 import logging
 import os
 
-from config import LOG_FORMAT, NAME_DELIMITER, DATA_DIR
+from config import LOG_FORMAT, NAME_DELIMITER, DATA_DIR, QUERIES_DIR
 from data_preparation.prepare_single_tables import prepare_all_tables
 from ensemble_creation.naive import create_naive_all_split_ensemble
 from evaluation.aqp_evaluation import compute_ground_truth
@@ -35,9 +35,7 @@ def main():
     # Definitions
     dataset_full_id = DATA_SOURCE + NAME_DELIMITER + DATASET_ID
     csv_path = os.path.join(DATA_DIR, "uncompressed", dataset_full_id + ".csv")
-    query_filepath = os.path.join(
-        "evaluation_files", "queries", dataset_full_id, QUERIES_SET + ".sql"
-    )
+    query_filepath = os.path.join(QUERIES_DIR, dataset_full_id, QUERIES_SET + ".sql")
     hdf_path = os.path.join(
         "evaluation_files",
         "hdf",
@@ -54,7 +52,8 @@ def main():
         "evaluation_files",
         "results",
         dataset_full_id,
-        QUERIES_SET + "_" + str(SAMPLES_PER_SPN),
+        QUERIES_SET,
+        f"sample_size_{SAMPLES_PER_SPN}",
     )
     results_filepath = os.path.join(results_path, "results.csv")
     info_filepath = os.path.join(results_path, "info.txt")
@@ -147,9 +146,8 @@ def main():
     logger.info(f"Saving experiment parameters and statistics to {info_filepath}")
     with open(info_filepath, "w", newline="") as f:
         f.write(f"------------- Parameters -------------\n")
-        f.write(f"HDF_FILES_GENERATED          {HDF_FILES_GENERATED}\n")
-        f.write(f"ENSEMBLE_GENERATED           {ENSEMBLE_GENERATED}\n")
-        f.write(f"GROUND_TRUTH_COMPUTED        {GROUND_TRUTH_COMPUTED}\n")
+        f.write(f"GENERATE_HDF_FILES           {GENERATE_HDF_FILES}\n")
+        f.write(f"GENERATE_ENSEMBLE            {GENERATE_ENSEMBLE}\n")
         f.write(f"DATA_SOURCE                  {DATA_SOURCE}\n")
         f.write(f"DATASET_ID                   {DATASET_ID}\n")
         f.write(f"QUERIES_SET                  {QUERIES_SET}\n")
