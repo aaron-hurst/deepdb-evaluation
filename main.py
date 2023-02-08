@@ -37,23 +37,23 @@ def main():
     dataset_full_id = DATA_SOURCE + NAME_DELIMITER + DATASET_ID
     csv_path = os.path.join(DATA_DIR, "uncompressed", dataset_full_id + ".csv")
     query_filepath = os.path.join(
-        "aqp_evaluation", "queries", dataset_full_id, QUERIES_SET + ".sql"
+        "evaluation_files", "queries", dataset_full_id, QUERIES_SET + ".sql"
     )
     hdf_path = os.path.join(
-        "aqp_evaluation",
+        "evaluation_files",
         "hdf",
         dataset_full_id,
         dataset_full_id + "_" + str(MAX_ROWS_PER_HDF_FILE),
     )
-    ensemble_path = os.path.join("aqp_evaluation", "spn_ensembles", dataset_full_id)
+    ensemble_path = os.path.join("evaluation_files", "spn_ensembles", dataset_full_id)
     ensemble_filepath = os.path.join(
         ensemble_path,
         "ensemble_single_" + dataset_full_id + "_" + str(SAMPLES_PER_SPN) + ".pkl",
     )
-    ground_truth_path = os.path.join("aqp_evaluation", "ground_truth", dataset_full_id)
+    ground_truth_path = os.path.join("evaluation_files", "ground_truth", dataset_full_id)
     ground_truth_filepath = os.path.join(ground_truth_path, QUERIES_SET + ".pkl")
     results_path = os.path.join(
-        "aqp_evaluation",
+        "evaluation_files",
         "results",
         dataset_full_id,
         QUERIES_SET + "_" + str(SAMPLES_PER_SPN),

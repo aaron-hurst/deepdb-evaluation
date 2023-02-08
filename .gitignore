@@ -2,11 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-aqp_evaluation/ground_truth/
-aqp_evaluation/hdf/
-aqp_evaluation/results/
-aqp_evaluation/spn_ensembles/
 config.py
+evaluation_files/
 
 # C extensions
 *.so

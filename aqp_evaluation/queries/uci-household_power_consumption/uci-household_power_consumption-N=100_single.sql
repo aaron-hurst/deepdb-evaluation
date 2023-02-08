@@ -1,1 +1,0 @@
-SELECT COUNT(global_active_power) FROM household_power_consumption WHERE global_active_power < 0.4462679 AND global_active_power > 0.3117321;
