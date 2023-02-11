@@ -158,16 +158,12 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
 
     # Evaluate all queries
     for query_no, query_str in enumerate(queries):
-        if (query_no % 100) == 0:
-            logger.info(f"Running query {query_no}")
-        
         query_str = query_str.strip()
         try:
             query = parse_query(query_str.strip(), schema)
         except NotImplementedError:
             logger.debug(f"Aggregation not implemented for query {query_no}: {query_str}")
             continue
-        logger.debug(f"Query {query_no}: {query_str}")
         aqp_start_t = perf_counter()
         confidence_intervals, aqp_result = spn_ensemble.evaluate_query(query, rdc_spn_selection=rdc_spn_selection,
                                                                        pairwise_rdc_path=pairwise_rdc_path,
@@ -269,6 +265,8 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         #     logger.debug(f"\t\tpredicted: {aqp_result}")
         
         n_queries_executed = n_queries_executed + 1
+        if (n_queries_executed % 1000) == 0:
+            logger.info("Queries executed: %d", n_queries_executed)
 
     # save_csv(csv_rows, target_path)
 
