@@ -94,7 +94,7 @@ def run_experiment(query_set, samples_per_spn):
         dataset_full_id,
         dataset_full_id + "_" + str(MAX_ROWS_PER_HDF_FILE),
     )
-    hdf_filename = dataset_id + ".hdf"
+    hdf_filename = dataset_full_id.replace(NAME_DELIMITER, "_") + ".hdf"
     ensemble_path = os.path.join(output_dir, "spn_ensembles", dataset_full_id)
     ensemble_filename = f"ensemble_single_{dataset_full_id}_{samples_per_spn}.pkl"
     ensemble_filepath = os.path.join(ensemble_path, ensemble_filename)
