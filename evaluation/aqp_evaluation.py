@@ -146,11 +146,21 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
     # read all queries
     with open(query_filename) as f:
         queries = f.readlines()
-    # read ground truth
-    with open(ground_truth_path, 'rb') as handle:
-        ground_truth = pickle.load(handle)
+    # # read ground truth
+    # with open(ground_truth_path, 'rb') as handle:
+    #     ground_truth = pickle.load(handle)
 
+    # Get list of column names
+    dataset_id = next(iter(spn_ensemble.schema_graph.table_dictionary.keys()))
+    column_names = spn_ensemble.schema_graph.table_dictionary[dataset_id].attributes
+    n_columns = len(column_names)
+    n_aggregations = 6  # number of different aggregation functions in query set
+
+    # Evaluate all queries
     for query_no, query_str in enumerate(queries):
+        if (query_no % 100) == 0:
+            logger.info(f"Running query {query_no}")
+        
         query_str = query_str.strip()
         try:
             query = parse_query(query_str.strip(), schema)
@@ -172,68 +182,97 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         latency = aqp_end_t - aqp_start_t
         logger.debug(f"\t\t{'total_time:':<32}{latency} secs")
 
-        if ground_truth is not None:
-            true_result = ground_truth[query_no]
-            if isinstance(aqp_result, list):
+        # Check if result is from a group by query
+        if isinstance(aqp_result, list):
+            raise NotImplementedError("Test does not support group by queries")
+        
+        # Get aggregation, predicate and aggregation column indices and query ID
+        aggregation = query.aggregation_operations[0][1].name
+        aggregation_col = None
+        predicate_col = None
+        for idx, c_name in enumerate(column_names):
+            if c_name in query.conditions[0][1]:
+                predicate_col = idx
+                break
+        aggregation_col = query_no % n_columns
+        i = query_no // (n_columns * n_aggregations)       
+        
+        # Add results to output schema
+        csv_rows.append(
+            {
+                "query_id": i,
+                "predicate_column": predicate_col,
+                "aggregation_column": aggregation_col,
+                "aggregation": aggregation,
+                "latency": latency,
+                "predicted_value": aqp_result,
+                "ci_low": confidence_intervals[0],
+                "ci_high": confidence_intervals[1],
+            }
+        )
 
-                average_relative_error, bin_completeness, false_bin_percentage, total_bins, \
-                true_value_in_confidence_interval, confidence_interval_length, _ = \
-                    evaluate_group_by(aqp_result, true_result, confidence_intervals)
+        # if ground_truth is not None:
+        #     true_result = ground_truth[query_no]
+        #     if isinstance(aqp_result, list):
 
-                logger.debug(f"\t\t{'total_bins: ':<32}{total_bins}")
-                logger.debug(f"\t\t{'bin_completeness: ':<32}{bin_completeness * 100:.2f}%")
-                logger.debug(f"\t\t{'average_relative_error: ':<32}{average_relative_error * 100:.2f}%")
-                logger.debug(f"\t\t{'false_bin_percentage: ':<32}{false_bin_percentage * 100:.2f}%")
-                if show_confidence_intervals:
-                    logger.debug(
-                        f"\t\t{'confidence_interval_precision: ':<32}{true_value_in_confidence_interval * 100:>.2f}%")
-                    logger.debug(f"\t\t{'confidence_interval_length: ':<32}{confidence_interval_length * 100:>.2f}%")
+        #         average_relative_error, bin_completeness, false_bin_percentage, total_bins, \
+        #         true_value_in_confidence_interval, confidence_interval_length, _ = \
+        #             evaluate_group_by(aqp_result, true_result, confidence_intervals)
 
-            else:
+        #         logger.debug(f"\t\t{'total_bins: ':<32}{total_bins}")
+        #         logger.debug(f"\t\t{'bin_completeness: ':<32}{bin_completeness * 100:.2f}%")
+        #         logger.debug(f"\t\t{'average_relative_error: ':<32}{average_relative_error * 100:.2f}%")
+        #         logger.debug(f"\t\t{'false_bin_percentage: ':<32}{false_bin_percentage * 100:.2f}%")
+        #         if show_confidence_intervals:
+        #             logger.debug(
+        #                 f"\t\t{'confidence_interval_precision: ':<32}{true_value_in_confidence_interval * 100:>.2f}%")
+        #             logger.debug(f"\t\t{'confidence_interval_length: ':<32}{confidence_interval_length * 100:>.2f}%")
 
-                true_result = true_result[0][0]
-                predicted_value = aqp_result
+        #     else:
 
-                logger.debug(f"\t\t{'predicted:':<32}{predicted_value}")
-                logger.debug(f"\t\t{'true:':<32}{true_result}")
-                logger.debug(f"\t\t{'confidence_interval:':<32}{confidence_intervals}")
-                relative_error = compute_relative_error(true_result, predicted_value)
-                logger.debug(f"\t\t{'relative_error:':<32}{relative_error * 100:.2f}%")
-                if show_confidence_intervals:
-                    true_value_in_confidence_interval, confidence_interval_length = evaluate_confidence_interval(
-                        confidence_intervals,
-                        true_result,
-                        predicted_value)
-                    logger.debug(
-                        f"\t\t{'confidence_interval_precision:':<32}{bool(true_value_in_confidence_interval)}")
-                    logger.debug(f"\t\t{'confidence_interval_length: ':<32}{confidence_interval_length * 100:>.2f}%")
-                total_bins = 1
-                bin_completeness = 1
-                average_relative_error = relative_error
+        #         true_result = true_result[0][0]
+        #         predicted_value = aqp_result
 
-            csv_rows.append({'approach': ApproachType.MODEL_BASED,
-                             'query_no': query_no,
-                             'latency': latency,
-                             'true_result': true_result,
-                             'predicted_value': predicted_value,
-                             'average_relative_error': average_relative_error * 100,  # as percentage
-                             'confidence_interval_alpha': confidence_interval_alpha,
-                             'confidence_interval_half_width': (confidence_intervals[1] - confidence_intervals[0]) / 2,
-                             'confidence_interval_half_width_relative': confidence_interval_length * 100,  # as percentage
-                             'confidence_interval_precision': true_value_in_confidence_interval,
-                            #  'bin_completeness': bin_completeness * 100,
-                            #  'total_bins': total_bins,
-                            #   'query': query_str,
-                            #  'sample_percentage': 100
-                             })
-        else:
-            logger.debug(f"\t\tpredicted: {aqp_result}")
+        #         logger.debug(f"\t\t{'predicted:':<32}{predicted_value}")
+        #         logger.debug(f"\t\t{'true:':<32}{true_result}")
+        #         logger.debug(f"\t\t{'confidence_interval:':<32}{confidence_intervals}")
+        #         relative_error = compute_relative_error(true_result, predicted_value)
+        #         logger.debug(f"\t\t{'relative_error:':<32}{relative_error * 100:.2f}%")
+        #         if show_confidence_intervals:
+        #             true_value_in_confidence_interval, confidence_interval_length = evaluate_confidence_interval(
+        #                 confidence_intervals,
+        #                 true_result,
+        #                 predicted_value)
+        #             logger.debug(
+        #                 f"\t\t{'confidence_interval_precision:':<32}{bool(true_value_in_confidence_interval)}")
+        #             logger.debug(f"\t\t{'confidence_interval_length: ':<32}{confidence_interval_length * 100:>.2f}%")
+        #         total_bins = 1
+        #         bin_completeness = 1
+        #         average_relative_error = relative_error
+
+        #     csv_rows.append({'approach': ApproachType.MODEL_BASED,
+        #                      'query_no': query_no,
+        #                      'latency': latency,
+        #                      'true_result': true_result,
+        #                      'predicted_value': predicted_value,
+        #                      'average_relative_error': average_relative_error * 100,  # as percentage
+        #                      'confidence_interval_alpha': confidence_interval_alpha,
+        #                      'confidence_interval_half_width': (confidence_intervals[1] - confidence_intervals[0]) / 2,
+        #                      'confidence_interval_half_width_relative': confidence_interval_length * 100,  # as percentage
+        #                      'confidence_interval_precision': true_value_in_confidence_interval,
+        #                     #  'bin_completeness': bin_completeness * 100,
+        #                     #  'total_bins': total_bins,
+        #                     #   'query': query_str,
+        #                     #  'sample_percentage': 100
+        #                      })
+        # else:
+        #     logger.debug(f"\t\tpredicted: {aqp_result}")
         
         n_queries_executed = n_queries_executed + 1
 
-    save_csv(csv_rows, target_path)
+    # save_csv(csv_rows, target_path)
 
-    return n_queries_executed
+    return n_queries_executed, csv_rows
 
 
 def evaluate_confidence_interval(confidence_interval, true_result, predicted):
