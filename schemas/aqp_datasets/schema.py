@@ -9,7 +9,7 @@ def get_schema(data_source, dataset_id, csv_path):
     schema = SchemaGraph()
     schema.add_table(
         Table(
-            dataset_id,
+            data_source + "_" + dataset_id,
             attributes=schemas[data_source][dataset_id]["column_names"],
             csv_file_location=csv_path,
             table_size=schemas[data_source][dataset_id]["n_rows"],
