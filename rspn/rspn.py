@@ -291,6 +291,12 @@ class RSPN:
                                           gen_code_stats=gen_code_stats) / p
 
         v_x = e_x_sq - e_x * e_x
+        
+        # NOTE: This code was added to deal with rounding error in the evaluation of v_x
+        # when the variance is zero. Unfortunately, this can sometimes result in a
+        # negative v_x, which should actually be zero.
+        if abs(v_x) < 1e-6:
+            v_x = 0
 
         n = p * self.full_sample_size
         std = np.sqrt(v_x / n)
