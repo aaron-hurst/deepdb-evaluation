@@ -154,7 +154,12 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
     dataset_id = next(iter(spn_ensemble.schema_graph.table_dictionary.keys()))
     column_names = spn_ensemble.schema_graph.table_dictionary[dataset_id].attributes
     n_columns = len(column_names)
+
+    # NOTE: added these variables to make it possible to interpret the predicate and
+    # addregation columns for each query.
     n_aggregations = 6  # number of different aggregation functions in query set
+    n_queries_per_column_pair = 100
+    # END
 
     # Evaluate all queries
     for query_no, query_str in enumerate(queries):
@@ -186,13 +191,10 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         aggregation = query.aggregation_operations[0][1].name
         aggregation_col = None
         predicate_col = None
-        for idx, c_name in enumerate(column_names):
-            if c_name in query.conditions[0][1]:
-                predicate_col = idx
-                break
-        aggregation_col = query_no % n_columns
-        i = query_no // (n_columns * n_aggregations)       
-        
+        i = query_no // (n_columns * n_aggregations)
+        predicate_col = i // n_queries_per_column_pair
+        aggregation_col = (query_no // n_aggregations) % n_columns
+
         # Add results to output schema
         csv_rows.append(
             {
