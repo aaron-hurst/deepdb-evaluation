@@ -541,7 +541,10 @@ def evaluate_factors(dry_run, factors_full, cached_expecation_vals, confidence_i
             "confidence_interval_samples is required for confidence interval calculation"
 
         bernoulli_p = factor_exps[:, 1]
-        factor_stds[:, 1] = np.sqrt(bernoulli_p * (1 - bernoulli_p) / confidence_interval_samples)
+        try:
+            factor_stds[:, 1] = np.sqrt(bernoulli_p * (1 - bernoulli_p) / confidence_interval_samples)
+        except FloatingPointError:
+            factor_stds[:, 1] = np.zeros_like(bernoulli_p)
         cardinality_stds = std_of_products(factor_exps, factor_stds)
         return cardinality_stds, values, cardinality, formula
     else:
