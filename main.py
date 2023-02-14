@@ -92,7 +92,7 @@ def run_experiment(query_set, samples_per_spn):
         output_dir,
         "hdf",
         dataset_full_id,
-        dataset_full_id + "_" + str(MAX_ROWS_PER_HDF_FILE),
+        "max_rows_" + str(MAX_ROWS_PER_HDF_FILE),
     )
     hdf_filename = dataset_full_id.replace(NAME_DELIMITER, "_") + ".hdf"
     ensemble_path = os.path.join(output_dir, "spn_ensembles", dataset_full_id)
@@ -263,14 +263,15 @@ def run_experiment(query_set, samples_per_spn):
 
 def main():
     # Run all experiments
-    for query_set in QUERY_SETS:
-        for samples_per_spn in [1000]:  # , 10000, 100000, 1000000]:
-            run_experiment(query_set, samples_per_spn=samples_per_spn)
+    # for query_set in QUERY_SETS:
+    #     for samples_per_spn in [1000, 10000, 100000, 1000000]:
+    #         run_experiment(query_set, samples_per_spn=samples_per_spn)
 
     # Run a single experiment
     # run_experiment(
-    #     "uci-household_power_consumption-N=100", min_pts=0.001, alpha=4000
+    #     "kaggle-aquaponics_all-N=100", samples_per_spn=1000000
     # )
+    pass
 
 
 if __name__ == "__main__":
