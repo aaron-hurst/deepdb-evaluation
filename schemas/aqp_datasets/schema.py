@@ -15,4 +15,5 @@ def get_schema(data_source, dataset_id, csv_path):
             table_size=schemas[data_source][dataset_id]["n_rows"],
         )
     )
-    return schema
+    schema_raw = schemas[data_source][dataset_id]
+    return schema, schema_raw

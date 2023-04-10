@@ -15,6 +15,7 @@ from config import (
 )
 from data_preparation.prepare_single_tables import prepare_all_tables
 from ensemble_creation.naive import create_naive_all_split_ensemble
+
 # from evaluation.aqp_evaluation import compute_ground_truth
 from evaluation.aqp_evaluation import evaluate_aqp_queries
 from schemas.aqp_datasets.schema import get_schema
@@ -113,7 +114,7 @@ def run_experiment(query_set, samples_per_spn):
 
     # Generate database schema
     logger.info("Generating schema.")
-    schema = get_schema(data_source, dataset_id, csv_path)
+    schema, schema_raw = get_schema(data_source, dataset_id, csv_path)
 
     # Generate HDF files for simpler sampling
     t_generate_hdf_start = perf_counter()
@@ -213,7 +214,11 @@ def run_experiment(query_set, samples_per_spn):
     )
 
     # Get file sizes
-    s_original = schema.tables[0].table_size * len(schema.tables[0].attributes) * 4
+    s_original = (
+        schema.tables[0].table_size
+        * len(schema.tables[0].attributes)
+        * schema_raw["bits_per_value"]
+    )
     s_hdf = os.stat(os.path.join(hdf_path, hdf_filename)).st_size
     s_ensemble = os.stat(ensemble_filepath).st_size
 

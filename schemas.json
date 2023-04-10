@@ -14,7 +14,8 @@
         "S",
         "St"
       ],
-      "n_rows": 1051200
+      "n_rows": 1051200,
+      "bits_per_value": 32
     },
     "current": {
       "column_names": [
@@ -42,7 +43,8 @@
         "TVE",
         "UNE"
       ],
-      "n_rows": 1051200
+      "n_rows": 1051200,
+      "bits_per_value": 32
     },
     "furnace_and_thermostat": {
       "column_names": [
@@ -58,7 +60,8 @@
         "S",
         "St"
       ],
-      "n_rows": 1051200
+      "n_rows": 1051200,
+      "bits_per_value": 32
     }
   },
   "chicago": {
@@ -75,7 +78,8 @@
         "dropoff_centroid_latitude",
         "dropoff_centroid_longitude"
       ],
-      "n_rows": 3466498
+      "n_rows": 3466498,
+      "bits_per_value": 64
     }
   },
   "kaggle": {
@@ -91,7 +95,8 @@
         "fish_weight_g",
         "pond_id"
       ],
-      "n_rows": 1114796
+      "n_rows": 1114796,
+      "bits_per_value": 32
     },
     "light_detection": {
       "column_names": [
@@ -104,7 +109,8 @@
         "smoke",
         "temperature"
       ],
-      "n_rows": 405184
+      "n_rows": 405184,
+      "bits_per_value": 64
     },
     "smart_building_system_413": {
       "column_names": [
@@ -115,7 +121,8 @@
         "temperature",
         "pir"
       ],
-      "n_rows": 130851
+      "n_rows": 130851,
+      "bits_per_value": 32
     },
     "smart_building_system_621A": {
       "column_names": [
@@ -126,7 +133,8 @@
         "temperature",
         "pir"
       ],
-      "n_rows": 130874
+      "n_rows": 130874,
+      "bits_per_value": 32
     },
     "smart_building_system_all": {
       "column_names": [
@@ -138,7 +146,8 @@
         "pir",
         "room_number"
       ],
-      "n_rows": 6571465
+      "n_rows": 6571465,
+      "bits_per_value": 32
     },
     "temperature_iot_on_gcp": {
       "column_names": [
@@ -146,7 +155,8 @@
         "temp_c",
         "device_id"
       ],
-      "n_rows": 10553597
+      "n_rows": 10553597,
+      "bits_per_value": 32
     },
     "temperature_iot_on_gcp_100k": {
       "column_names": [
@@ -154,7 +164,8 @@
         "temp_c",
         "device_id"
       ],
-      "n_rows": 100000
+      "n_rows": 100000,
+      "bits_per_value": 32
     },
     "temperature_iot_on_gcp_500k": {
       "column_names": [
@@ -162,7 +173,8 @@
         "temp_c",
         "device_id"
       ],
-      "n_rows": 500000
+      "n_rows": 500000,
+      "bits_per_value": 32
     }
   },
   "uci": {
@@ -176,7 +188,8 @@
         "sub_metering_2",
         "sub_metering_3"
       ],
-      "n_rows": 2049280
+      "n_rows": 2049280,
+      "bits_per_value": 32
     },
     "gas_sensor_home_activity": {
       "column_names": [
@@ -192,7 +205,8 @@
         "Temperature",
         "Humidity"
       ],
-      "n_rows": 928991
+      "n_rows": 928991,
+      "bits_per_value": 32
     }
   }
 }
