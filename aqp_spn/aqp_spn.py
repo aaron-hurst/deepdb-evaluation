@@ -539,12 +539,12 @@ class AQPSPN(CombineSPN, RSPN):
                     literal = float(literal.strip())
                     ranges = _adapt_ranges(attribute_index, literal, ranges, inclusive=False, lower_than=False)
                 else:
-                    raise ValueError("Unknown operator")
+                    raise ValueError(f"Unknown operator: {condition}")
 
                 def is_invalid_interval(single_numeric_range):
                     assert single_numeric_range[attribute_index].ranges[0][1] >= \
                            single_numeric_range[attribute_index].ranges[0][0], \
-                        "Value range does not contain any values"
+                           "Value range does not contain any values"
 
                 map(is_invalid_interval, ranges)
 

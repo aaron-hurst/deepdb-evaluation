@@ -3,17 +3,17 @@ import json
 from ensemble_compilation.graph_representation import SchemaGraph, Table
 
 
-def get_schema(data_source, dataset_id, csv_path):
+def get_schema(dataset_id, csv_path):
     with open("schemas.json", "r") as fp:
         schemas = json.load(fp)
     schema = SchemaGraph()
     schema.add_table(
         Table(
-            data_source + "_" + dataset_id,
-            attributes=schemas[data_source][dataset_id]["column_names"],
+            dataset_id.replace("-", "_"),
+            attributes=schemas[dataset_id]["column_names"],
             csv_file_location=csv_path,
-            table_size=schemas[data_source][dataset_id]["n_rows"],
+            table_size=schemas[dataset_id]["n_rows"],
         )
     )
-    schema_raw = schemas[data_source][dataset_id]
+    schema_raw = schemas[dataset_id]
     return schema, schema_raw

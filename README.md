@@ -1,3 +1,13 @@
+# Evaluation for GD AQP paper
+
+Notes on usage of repository:
+
+* I used `requirements_python3.8.txt`.
+* Make a copy of `_config.py` called `config.py` and update the parameters.
+* Run experiments from the `main.py` script.
+
+--------------------------------------------------------------------------------------
+
 # DeepDB: Learn from Data, not from Queries!
 
 DeepDB is a data-driven learned database component achieving state-of-the-art-performance in cardinality estimation and 

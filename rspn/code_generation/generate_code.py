@@ -130,7 +130,7 @@ def generate_method_body(node, root_node, floating_data_type, depth):
     elif isinstance(node, Sum):
         return generate_sum_node(node, root_node, floating_data_type, depth + 1)
     else:
-        raise NotImplementedError
+        raise NotImplementedError("unknown reason")
 
 
 def generate_code(spn_id, spn, meta_types, floating_data_type):

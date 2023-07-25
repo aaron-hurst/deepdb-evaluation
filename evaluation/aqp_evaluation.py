@@ -166,8 +166,8 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         query_str = query_str.strip()
         try:
             query = parse_query(query_str.strip(), schema)
-        except NotImplementedError:
-            logger.debug(f"Aggregation not implemented for query {query_no}: {query_str}")
+        except NotImplementedError as e:
+            logger.info(f"Could not parse query {query_no}: {e}")
             continue
         aqp_start_t = perf_counter()
         confidence_intervals, aqp_result = spn_ensemble.evaluate_query(query, rdc_spn_selection=rdc_spn_selection,
@@ -185,27 +185,16 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
 
         # Check if result is from a group by query
         if isinstance(aqp_result, list):
-            raise NotImplementedError("Test does not support group by queries")
-        
-        # Get aggregation, predicate and aggregation column indices and query ID
-        aggregation = query.aggregation_operations[0][1].name
-        aggregation_col = None
-        predicate_col = None
-        i = query_no // (n_columns * n_aggregations)
-        predicate_col = i // n_queries_per_column_pair
-        aggregation_col = (query_no // n_aggregations) % n_columns
+            raise NotImplementedError(f"Group By queries not currently supported.")
 
         # Add results to output schema
         csv_rows.append(
             {
-                "query_id": i,
-                "predicate_column": predicate_col,
-                "aggregation_column": aggregation_col,
-                "aggregation": aggregation,
+                "query_id": query_no,
                 "latency": latency,
-                "predicted_value": aqp_result,
-                "ci_low": confidence_intervals[0],
-                "ci_high": confidence_intervals[1],
+                "estimate": aqp_result,
+                "bound_low": confidence_intervals[0],
+                "bound_high": confidence_intervals[1],
             }
         )
 

@@ -258,14 +258,14 @@ def prepare_all_tables(schema_graph, path, csv_seperator=',', csv_header=None, m
     for table_obj in schema_graph.tables:
         table = table_obj.table_name
         logger.info("Preparing hdf file for table {}".format(table))
-        meta_data[table] = prepare_single_table(schema_graph, table, path + '/' + table + '.hdf',
+        meta_data[table] = prepare_single_table(schema_graph, table, path + '.hdf',
                                                 csv_seperator=csv_seperator, csv_header=csv_header, max_table_data=max_table_data)
 
-    with open(path + '/meta_data.pkl', 'wb') as f:
+    with open(path + '_meta_data.pkl', 'wb') as f:
         pickle.dump(meta_data, f, pickle.HIGHEST_PROTOCOL)
     prep_end_t = perf_counter()
 
-    with open(path + '/build_time_hdf.txt', "w") as text_file:
-        text_file.write(str(round(prep_end_t-prep_start_t)))
+    # with open(path + '/build_time_hdf.txt', "w") as text_file:
+    #     text_file.write(str(round(prep_end_t-prep_start_t)))
 
     return meta_data

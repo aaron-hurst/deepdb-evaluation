@@ -11,7 +11,7 @@ RATIO_MIN_INSTANCE_SLICE = 1 / 100
 
 def create_naive_all_split_ensemble(schema, hdf_path, sample_size, ensemble_path, dataset, bloom_filters,
                                     rdc_threshold, max_table_data, post_sampling_factor, incremental_learning_rate):
-    meta_data_path = hdf_path + '/meta_data.pkl'
+    meta_data_path = hdf_path + '_meta_data.pkl'
     prep = JoinDataPreparator(meta_data_path, schema, max_table_data=max_table_data)
     spn_ensemble = SPNEnsemble(schema)
 
@@ -47,7 +47,7 @@ def create_naive_all_split_ensemble(schema, hdf_path, sample_size, ensemble_path
             aqp_spn.learn_incremental(df_inc_samples.values)
         spn_ensemble.add_spn(aqp_spn)
 
-    ensemble_path += '/ensemble_single_' + dataset + '_' + str(sample_size) + '.pkl'
+    # ensemble_path += '/ensemble_single_' + dataset + '_' + str(sample_size) + '.pkl'
     logger.info(f"Saving ensemble to {ensemble_path}")
     spn_ensemble.save(ensemble_path)
 

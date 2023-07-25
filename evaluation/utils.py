@@ -63,7 +63,7 @@ def _parse_aggregation(alias_dict, function, query, schema):
         query.add_aggregation_operation((AggregationOperationType.AGGREGATION, AggregationType.COUNT, []))
         return
     else:
-        raise NotImplementedError(f"Unknown operator: {operator.normalized} ")
+        raise NotImplementedError(f"Unsupported aggregation: {operator.normalized}")
     operand_parantheses = [token for token in function if isinstance(token, sqlparse.sql.Parenthesis)]
     assert len(operand_parantheses) == 1
     operand_parantheses = operand_parantheses[0]
@@ -114,7 +114,7 @@ def parse_what_if_query(query_str, schema, return_condition_string=False):
             operator = "IN"
             column, where_condition = condition.split("IN", 1)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"Unsupported condition operator: {condition}")
 
         column = column.strip()
         where_condition = where_condition.strip()
@@ -233,8 +233,10 @@ def parse_query(query_str, schema):
         return query
 
     where_statements = where_statements[0]
-    assert len(
-        [token for token in where_statements if token.normalized == 'OR']) == 0, "OR statements currently unsupported."
+    if any([t.normalized == "OR" for t in where_statements]):
+        raise NotImplementedError("OR statements currently unsupported.")
+    # assert len(
+    #     [token for token in where_statements if token.normalized == 'OR']) == 0, "OR statements currently unsupported."
 
     # Parse where statements
     # parse multiple values differently because sqlparse does not parse as comparison

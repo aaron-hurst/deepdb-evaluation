@@ -137,7 +137,7 @@ def _interval_probability(node, left, right, null_value, left_included, right_in
     else:
         higher_idx = np.searchsorted(node.unique_vals, right, side='right')
 
-    if lower_idx == higher_idx:
+    if (lower_idx == higher_idx) or (lower_idx >= len(node.unique_vals)):
         return 0
 
     p = node.prob_sum[higher_idx] - node.prob_sum[lower_idx]
@@ -208,7 +208,7 @@ def identity_expectation(node, data, inverted=False, power=1):
                 else:
                     exps[i] = node.inverted_square_mean * (1 - node.null_value_prob)
             else:
-                raise NotImplementedError
+                raise NotImplementedError("unknown reason")
             continue
 
         for k, interval in enumerate(rang.get_ranges()):

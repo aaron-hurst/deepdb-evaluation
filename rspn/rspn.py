@@ -291,16 +291,27 @@ class RSPN:
                                           gen_code_stats=gen_code_stats) / p
 
         v_x = e_x_sq - e_x * e_x
-        
+
         # NOTE: This code was added to deal with rounding error in the evaluation of v_x
         # when the variance is zero. Unfortunately, this can sometimes result in a
         # negative v_x, which should actually be zero.
         if abs(v_x) < 1e-6:
             v_x = 0
 
+        # NOTE: Added this code because sometimes the probability, p, can be negative.
+        # For example, with this query:
+        # SELECT SUM(global_intensity)
+        # FROM uci_household_power_consumption
+        # WHERE
+        #   sub_metering_1 > 15.0
+        #   or sub_metering_2 <= 0.0
+        #   and sub_metering_1 <= 0.0
+        #   and sub_metering_3 > 16.0;
+        if p <= 0:
+            return 0, e_x
+        
         n = p * self.full_sample_size
         std = np.sqrt(v_x / n)
-
         return std, e_x
 
     def _normalized_conditional_expectation(self, feature_scope, inverted_features=None, normalizing_scope=None,
