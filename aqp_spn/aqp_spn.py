@@ -164,7 +164,7 @@ class AQPSPN(CombineSPN, RSPN):
                                                      standard_deviations=standard_deviations,
                                                      impute_p=impute_p,
                                                      gen_code_stats=gen_code_stats)
-        if standard_deviations:
+        if standard_deviations and (std_values != 0):
             if group_bys is None or group_bys == []:
                 std_values = std_values.item()
             else:
@@ -468,7 +468,18 @@ class AQPSPN(CombineSPN, RSPN):
                     literal = literal.strip(' "\'')
 
                     if group_by_columns_merged is None or matching_column not in group_by_columns_merged:
-                        ranges[:, attribute_index] = NominalRange([val_dict[literal]])
+                        # --------------------------------------------- #
+                        # Work around for missing values lookup vs. nan #
+                        # Added by: Aaron Hurst, July 2023              #
+                        if literal == '':
+                            import pandas as pd
+                            na_idx = np.where(pd.isna(list(val_dict.keys())))[0][0]
+                            key = list(val_dict.keys())[na_idx]
+                            range = [val_dict[key]]
+                        else:
+                            range = [val_dict[literal]]
+                        # --------------------------------------------- #
+                        ranges[:, attribute_index] = NominalRange(range)
                     else:
                         matching_group_by_idx = group_by_columns_merged.index(matching_column)
                         # due to functional dependencies this check does not make sense any more

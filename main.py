@@ -19,14 +19,16 @@ from schemas.aqp_datasets.schema import get_schema
 
 LOGGING_LEVEL = logging.INFO
 
-DATASET_ID = "uci-household_power_consumption"
-QUERY_SET = 15
+# DATASET_ID = "uci-household_power_consumption"
+# QUERY_SET = 15
+DATASET_ID = "usdot-flights"
+QUERY_SET = 4
 
 GENERATE_HDF_FILES = False  # force creation of new HDF files
-GENERATE_ENSEMBLE = True  # force creation of new ensembles
+GENERATE_ENSEMBLE = False  # force creation of new ensembles
 
-SAMPLES_PER_SPN = 100000
 HDF_MAX_ROWS = 10000000
+SAMPLES_PER_SPN = 100000
 CONFIDENCE_INTERVAL_ALPHA = 0.99
 BLOOM_FILTERS = False
 RDC_THRESHOLD = 0.3
@@ -74,7 +76,7 @@ def main():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     output_dir = os.path.join(RESULTS_DIR, "aqp", "deepdb")
     hdf_filepath = os.path.join(
-        output_dir, "hdf", f"{DATASET_ID}_max_rows_{HDF_MAX_ROWS}"
+        output_dir, "hdf", f"{DATASET_ID}_max_rows_{HDF_MAX_ROWS}.hdf"
     )
     ensemble_filepath = os.path.join(
         output_dir, "spn_ensembles", f"{DATASET_ID}_single_{SAMPLES_PER_SPN}.pkl"

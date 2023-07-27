@@ -4,6 +4,7 @@ from ensemble_compilation.graph_representation import SchemaGraph, Table
 
 
 def get_schema(dataset_id, csv_path):
+    # TODO special code for handling scaled up datasets (i.e., different n_rows)
     with open("schemas.json", "r") as fp:
         schemas = json.load(fp)
     schema = SchemaGraph()

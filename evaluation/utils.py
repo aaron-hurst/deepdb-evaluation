@@ -81,8 +81,11 @@ def _parse_aggregation(alias_dict, function, query, schema):
             operation_factors.append(feature)
     # single column
     else:
-        feature = _fully_qualified_attribute_name(_extract_identifiers(operand_parantheses)[0], schema,
-                                                  alias_dict, return_split=True)
+        try:
+            feature = _fully_qualified_attribute_name(_extract_identifiers(operand_parantheses)[0], schema,
+                                                      alias_dict, return_split=True)
+        except IndexError:
+            raise NotImplementedError(f"Query parsing failed on: {operand_parantheses}")
         operation_factors.append(feature)
     query.add_aggregation_operation((AggregationOperationType.AGGREGATION, operation_type, operation_factors))
 

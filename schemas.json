@@ -13,8 +13,7 @@
       "S",
       "St"
     ],
-    "n_rows": 1051200,
-    "bits_per_value": 32
+    "n_rows": 1051200
   },
   "ampds-current": {
     "column_names": [
@@ -42,8 +41,7 @@
       "TVE",
       "UNE"
     ],
-    "n_rows": 1051200,
-    "bits_per_value": 32
+    "n_rows": 1051200
   },
   "ampds-furnace_and_thermostat": {
     "column_names": [
@@ -59,8 +57,7 @@
       "S",
       "St"
     ],
-    "n_rows": 1051200,
-    "bits_per_value": 32
+    "n_rows": 1051200
   },
   "chicago-taxi_trips_2020": {
     "column_names": [
@@ -75,8 +72,7 @@
       "dropoff_centroid_latitude",
       "dropoff_centroid_longitude"
     ],
-    "n_rows": 3466498,
-    "bits_per_value": 64
+    "n_rows": 3466498
   },
   "kaggle-aquaponics_all": {
     "column_names": [
@@ -90,8 +86,7 @@
       "fish_weight_g",
       "pond_id"
     ],
-    "n_rows": 1114796,
-    "bits_per_value": 32
+    "n_rows": 1114796
   },
   "kaggle-light_detection": {
     "column_names": [
@@ -104,8 +99,7 @@
       "smoke",
       "temperature"
     ],
-    "n_rows": 405184,
-    "bits_per_value": 64
+    "n_rows": 405184
   },
   "kaggle-smart_building_system_413": {
     "column_names": [
@@ -116,8 +110,7 @@
       "temperature",
       "pir"
     ],
-    "n_rows": 130851,
-    "bits_per_value": 32
+    "n_rows": 130851
   },
   "kaggle-smart_building_system_621A": {
     "column_names": [
@@ -128,8 +121,7 @@
       "temperature",
       "pir"
     ],
-    "n_rows": 130874,
-    "bits_per_value": 32
+    "n_rows": 130874
   },
   "kaggle-smart_building_system_all": {
     "column_names": [
@@ -141,8 +133,7 @@
       "pir",
       "room_number"
     ],
-    "n_rows": 6571465,
-    "bits_per_value": 32
+    "n_rows": 6571465
   },
   "kaggle-temperature_iot_on_gcp": {
     "column_names": [
@@ -150,8 +141,7 @@
       "temp_c",
       "device_id"
     ],
-    "n_rows": 10553597,
-    "bits_per_value": 32
+    "n_rows": 10553597
   },
   "kaggle-temperature_iot_on_gcp_100k": {
     "column_names": [
@@ -159,8 +149,7 @@
       "temp_c",
       "device_id"
     ],
-    "n_rows": 100000,
-    "bits_per_value": 32
+    "n_rows": 100000
   },
   "kaggle-temperature_iot_on_gcp_500k": {
     "column_names": [
@@ -168,8 +157,7 @@
       "temp_c",
       "device_id"
     ],
-    "n_rows": 500000,
-    "bits_per_value": 32
+    "n_rows": 500000
   },
   "uci-household_power_consumption": {
     "column_names": [
@@ -184,8 +172,7 @@
       "sub_metering_2",
       "sub_metering_3"
     ],
-    "n_rows": 2049280,
-    "bits_per_value": 32
+    "n_rows": 2049280
   },
   "uci-gas_sensor_home_activity": {
     "column_names": [
@@ -201,7 +188,43 @@
       "Temperature",
       "Humidity"
     ],
-    "n_rows": 928991,
-    "bits_per_value": 32
+    "n_rows": 928991
+  },
+  "usdot-flights": {
+    "column_names": [
+      "_id",
+      "year",
+      "month",
+      "day",
+      "day_of_week",
+      "airline",
+      "flight_number",
+      "tail_number",
+      "origin_airport",
+      "destination_airport",
+      "scheduled_departure",
+      "departure_time",
+      "departure_delay",
+      "taxi_out",
+      "wheels_off",
+      "scheduled_time",
+      "elapsed_time",
+      "air_time",
+      "distance",
+      "wheels_on",
+      "taxi_in",
+      "scheduled_arrival",
+      "arrival_time",
+      "arrival_delay",
+      "diverted",
+      "cancelled",
+      "cancellation_reason",
+      "air_system_delay",
+      "security_delay",
+      "airline_delay",
+      "late_aircraft_delay",
+      "weather_delay"
+    ],
+    "n_rows": 5819079
   }
 }
