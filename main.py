@@ -25,7 +25,7 @@ DATASET_ID = "usdot-flights"
 QUERY_SET = 4
 
 GENERATE_HDF_FILES = False  # force creation of new HDF files
-GENERATE_ENSEMBLE = False  # force creation of new ensembles
+GENERATE_ENSEMBLE = True  # force creation of new ensembles
 
 HDF_MAX_ROWS = 10000000
 SAMPLES_PER_SPN = 100000
@@ -70,7 +70,6 @@ def main():
     # Inputs
     csv_path = os.path.join(DATA_DIR, "processed", f"{DATASET_ID}.csv")
     queries_filepath = os.path.join(QUERIES_DIR, f"{DATASET_ID}_v{QUERY_SET}.txt")
-    # database_name = DATASET_ID.replace(NAME_DELIMITER, "_")
 
     # Outputs
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -91,7 +90,7 @@ def main():
     )
     results_name = f"queries_v{QUERY_SET}_sample_size_{SAMPLES_PER_SPN}_{timestamp}"
     results_filepath = os.path.join(results_path, results_name + ".csv")
-    info_filepath = os.path.join(results_path, results_name + "_metadata.txt")
+    metadata_filepath = os.path.join(results_path, results_name + "_metadata.txt")
 
     # Generate database schema
     logger.info("Generating schema...")
@@ -103,7 +102,7 @@ def main():
     if GENERATE_HDF_FILES or (
         os.path.basename(hdf_filepath) not in os.listdir(os.path.dirname(hdf_filepath))
     ):
-        logger.info("Generate HDF files...")
+        logger.info("Generating HDF files...")
         prepare_all_tables(
             schema,
             hdf_filepath,
@@ -121,7 +120,7 @@ def main():
         os.path.basename(ensemble_filepath)
         not in os.listdir(os.path.dirname(ensemble_filepath))
     ):
-        logger.info("Generate SPN ensemble.")
+        logger.info("Generating SPN ensemble...")
         create_naive_all_split_ensemble(
             schema,
             hdf_filepath,
@@ -136,8 +135,8 @@ def main():
         )
     t_generate_ensemble = perf_counter() - t_generate_ensemble_start
 
-    # Read pre-trained ensemble and evaluate AQP queries
-    logger.info("Evaluating queries")
+    # Evaluate queries using pre-trained ensemble
+    logger.info("Evaluating queries...")
     t_queries_start = perf_counter()
     n_queries, results = evaluate_aqp_queries(
         ensemble_filepath,
@@ -161,12 +160,7 @@ def main():
     # Merge with ground truth data
     df_gt = pd.read_csv(ground_truth_filepath)
     df = pd.DataFrame(results)
-    df = pd.merge(
-        df,
-        df_gt,
-        how="left",
-        on=["query_id"],
-    )
+    df = pd.merge(df, df_gt, how="left", on=["query_id"])
 
     # Compute error and bounds statistics
     df["error"] = df["estimate"] - df["exact_result"]
@@ -188,18 +182,18 @@ def main():
     df.to_csv(results_filepath, index=False)
 
     # Get file sizes for metadata
-    s_hdf = os.stat(hdf_filepath + ".hdf").st_size
+    s_hdf = os.stat(hdf_filepath).st_size
     s_ensemble = os.stat(ensemble_filepath).st_size
 
     # Export parameters and statistics
     t_construction = t_generate_hdf + t_generate_ensemble
-    os.makedirs(os.path.dirname(info_filepath), exist_ok=True)
+    os.makedirs(os.path.dirname(metadata_filepath), exist_ok=True)
     logger.info("Saving experiment metadata...")
     if n_queries:
         mean_latency = t_queries / n_queries
     else:
         mean_latency = 0
-    with open(info_filepath, "w", newline="") as f:
+    with open(metadata_filepath, "w", newline="") as f:
         f.write("------------- Parameters -------------\n")
         f.write(f"DATASET_ID                   {DATASET_ID}\n")
         f.write(f"QUERIES_SET                  {QUERY_SET}\n")
@@ -227,8 +221,8 @@ def main():
         f.write(f"Mean latency                 {mean_latency:.6f} s\n")
 
         f.write("\n------------- Storage -------------\n")
-        f.write(f"HDF files                    {s_hdf:,d} bytes\n")
-        f.write(f"SPN ensembles                {s_ensemble:,d} bytes\n")
+        f.write(f"HDF files                    {s_hdf} bytes\n")
+        f.write(f"SPN ensembles                {s_ensemble} bytes\n")
 
 
 if __name__ == "__main__":

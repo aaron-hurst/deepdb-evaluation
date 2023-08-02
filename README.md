@@ -2,7 +2,7 @@
 
 Notes on usage of repository:
 
-* I used `requirements_python3.8.txt`.
+* I used **Python 3.10** and installed packages using **pip** and `requirements_python3.10.txt`.
 * Make a copy of `_config.py` called `config.py` and update the parameters.
 * Run experiments from the `main.py` script.
 

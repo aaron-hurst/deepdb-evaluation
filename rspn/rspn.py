@@ -70,7 +70,8 @@ def build_ds_context(column_names, meta_types, null_values, table_meta_data, no_
         else:
             raise Exception("Unkown MetaType " + str(meta_types[col]))
 
-    ds_context.domains = np.asanyarray(domain)
+    # ds_context.domains = np.asanyarray(domain)  # error due to jagged array
+    ds_context.domains = domain
     ds_context.no_unique_values = np.asanyarray(no_unique_values)
     ds_context.group_by_attributes = group_by_attributes
 
