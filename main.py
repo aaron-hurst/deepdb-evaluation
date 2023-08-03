@@ -19,12 +19,12 @@ from schemas.aqp_datasets.schema import get_schema
 
 LOGGING_LEVEL = logging.INFO
 
-# DATASET_ID = "uci-household_power_consumption"
-# QUERY_SET = 15
-DATASET_ID = "usdot-flights"
-QUERY_SET = 4
+DATASET_ID = "uci-household_power_consumption"
+QUERY_SET = 15
+# DATASET_ID = "usdot-flights"
+# QUERY_SET = 4
 
-GENERATE_HDF_FILES = False  # force creation of new HDF files
+GENERATE_HDF_FILES = True  # force creation of new HDF files
 GENERATE_ENSEMBLE = True  # force creation of new ensembles
 
 HDF_MAX_ROWS = 10000000

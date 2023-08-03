@@ -150,17 +150,6 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
     # with open(ground_truth_path, 'rb') as handle:
     #     ground_truth = pickle.load(handle)
 
-    # Get list of column names
-    dataset_id = next(iter(spn_ensemble.schema_graph.table_dictionary.keys()))
-    column_names = spn_ensemble.schema_graph.table_dictionary[dataset_id].attributes
-    n_columns = len(column_names)
-
-    # NOTE: added these variables to make it possible to interpret the predicate and
-    # addregation columns for each query.
-    n_aggregations = 6  # number of different aggregation functions in query set
-    n_queries_per_column_pair = 100
-    # END
-
     # Evaluate all queries
     for query_no, query_str in enumerate(queries):
         query_str = query_str.strip()

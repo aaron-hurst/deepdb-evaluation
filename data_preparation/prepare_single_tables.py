@@ -1,11 +1,58 @@
 import logging
 import pickle
-from time import perf_counter
 
 import numpy as np
 import pandas as pd
 
 logger = logging.getLogger(__name__)
+
+
+def read_table_csv_sample(
+        table_obj,
+        csv_seperator=',',
+        csv_header=None,
+        sample_size=1000000,
+        chunk_size=10000000
+):
+    """Loads a dataset from a CSV file. Loads in batches if the file is vary large."""
+
+    # Number of samples for each chunk
+    n_chunks = int(np.ceil(table_obj.table_size / chunk_size))
+    sample_ratio = min(sample_size / table_obj.table_size, 1)
+    chunk_sizes = [chunk_size] * (n_chunks - 1) + [table_obj.table_size % chunk_size]
+    samples_per_chunk = [int(sample_ratio * s) for s in chunk_sizes]
+    if sum(samples_per_chunk) < min(sample_size, table_obj.table_size):
+        diff = sample_size - sum(samples_per_chunk)
+        samples_per_chunk = [s + (i < diff) for i, s in enumerate(samples_per_chunk)]
+
+    # Load samples from each chunk
+    logger.info(f"Total chunks: {n_chunks} (chunk size={chunk_size})")
+    chunks = []
+    with pd.read_csv(
+        table_obj.csv_file_location,
+        header=csv_header,
+        sep=csv_seperator,
+        escapechar="\\",
+        encoding="utf-8",
+        quotechar='"',
+        chunksize=chunk_size,
+    ) as reader:
+        for i, chunk in enumerate(reader):
+            logger.info(f"Loading chunk {i+1}/{n_chunks}")
+            sample_rows = np.sort(
+                np.random.choice(
+                    np.arange(chunk.shape[0]), samples_per_chunk[i], replace=False
+                )
+            )
+            chunks.append(chunk.iloc[sample_rows])
+    df = pd.concat(chunks, axis=0, ignore_index=True, copy=False)
+
+    # Reformat column names
+    df.columns = [table_obj.table_name + '.' + attr for attr in table_obj.attributes]
+    for attribute in table_obj.irrelevant_attributes:
+        df = df.drop(table_obj.table_name + '.' + attribute, axis=1)
+
+    return df
 
 
 def read_table_csv(table_obj, csv_seperator=',', csv_header=None):
@@ -20,7 +67,6 @@ def read_table_csv(table_obj, csv_seperator=',', csv_header=None):
         df_rows = df_rows.drop(table_obj.table_name + '.' + attribute, axis=1)
 
     return df_rows.apply(pd.to_numeric, errors="ignore")
-    # return df_rows.convert_objects()
 
 
 def find_relationships(schema_graph, table, incoming=True):
@@ -47,8 +93,21 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
     """
     table_meta_data = dict()
     table_obj = schema_graph.table_dictionary[table]
-    table_data = read_table_csv(table_obj, csv_seperator=csv_seperator, csv_header=csv_header)
-    table_sample_rate = table_obj.sample_rate
+
+    ####################################################################################
+    # Load sample directly from CSV to avoid memory issues related to loading very large
+    # CSV files.
+    # table_data = read_table_csv(
+    #     table_obj, csv_seperator=csv_seperator, csv_header=csv_header
+    # )
+    table_data = read_table_csv_sample(
+        table_obj,
+        csv_seperator=csv_seperator,
+        csv_header=csv_header,
+        sample_size=max_table_data
+    )
+    ####################################################################################
+    table_sample_rate = table_obj.sample_rate  # TODO check what this does and if I need to set it
 
     relevant_attributes = [x for x in table_obj.attributes if x not in table_obj.irrelevant_attributes]
 
@@ -212,11 +271,14 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
 
     assert not table_data.isna().any().any(), "Still contains null values"
 
-    # save modified table
-    if len(table_data) < max_table_data:
-        table_data.to_hdf(path, key='df', format='table')
-    else:
-        table_data.sample(max_table_data).to_hdf(path, key='df', format='table')
+    ###########################################
+    # Save modified table
+    # if len(table_data) < max_table_data:
+    #     table_data.to_hdf(path, key='df', format='table')
+    # else:
+    #     table_data.sample(max_table_data).to_hdf(path, key='df', format='table')
+    table_data.to_hdf(path, key='df', format='table')
+    ###########################################
 
     # add table parts without join partners
     logger.info("Adding table parts without join partners for table {}".format(table))
@@ -253,7 +315,6 @@ def prepare_single_table(schema_graph, table, path, max_distinct_vals=10000, csv
 
 
 def prepare_all_tables(schema_graph, path, csv_seperator=',', csv_header=None, max_table_data=20000000):
-    prep_start_t = perf_counter()
     meta_data = {}
     for table_obj in schema_graph.tables:
         table = table_obj.table_name
@@ -263,9 +324,5 @@ def prepare_all_tables(schema_graph, path, csv_seperator=',', csv_header=None, m
 
     with open(path[:-4] + '_meta_data.pkl', 'wb') as f:
         pickle.dump(meta_data, f, pickle.HIGHEST_PROTOCOL)
-    prep_end_t = perf_counter()
-
-    # with open(path + '/build_time_hdf.txt', "w") as text_file:
-    #     text_file.write(str(round(prep_end_t-prep_start_t)))
 
     return meta_data
