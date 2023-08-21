@@ -6,6 +6,20 @@ Notes on usage of repository:
 * Make a copy of `_config.py` called `config.py` and update the parameters.
 * Run experiments from the `main.py` script.
 
+To install the Python package `psycopg2`, it may be necessary to install `libpq-dev` (not a Python package).
+See the `psycopg2` [installation instructions](https://www.psycopg.org/docs/install.html) for more details.
+
+```cmd
+sudo apt-get update
+sudo apt-get install libpq-dev
+```
+
+I also needed to install `libodbc.so.2`, which I did via:
+
+```cmd
+sudo apt-get install unixodbc
+```
+
 --------------------------------------------------------------------------------------
 
 # DeepDB: Learn from Data, not from Queries!
