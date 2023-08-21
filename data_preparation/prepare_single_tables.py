@@ -19,7 +19,10 @@ def read_table_csv_sample(
     # Number of samples for each chunk
     n_chunks = int(np.ceil(table_obj.table_size / chunk_size))
     sample_ratio = min(sample_size / table_obj.table_size, 1)
-    chunk_sizes = [chunk_size] * (n_chunks - 1) + [table_obj.table_size % chunk_size]
+    if table_obj.table_size % chunk_size:
+        chunk_sizes = [chunk_size] * (n_chunks - 1) + [table_obj.table_size % chunk_size]
+    else:
+        chunk_sizes = [chunk_size] * (n_chunks - 1) + [chunk_size]
     samples_per_chunk = [int(sample_ratio * s) for s in chunk_sizes]
     if sum(samples_per_chunk) < min(sample_size, table_obj.table_size):
         diff = sample_size - sum(samples_per_chunk)
