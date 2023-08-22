@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from datetime import datetime
@@ -6,16 +7,11 @@ from time import perf_counter
 import numpy as np
 import pandas as pd
 
-from config import (
-    LOG_FORMAT,
-    DATA_DIR,
-    QUERIES_DIR,
-    RESULTS_DIR,
-)
+from config import LOG_FORMAT, DATA_DIR, QUERIES_DIR, RESULTS_DIR
 from data_preparation.prepare_single_tables import prepare_all_tables
+from ensemble_compilation.graph_representation import SchemaGraph, Table
 from ensemble_creation.naive import create_naive_all_split_ensemble
 from evaluation.aqp_evaluation import evaluate_aqp_queries
-from schemas.aqp_datasets.schema import get_schema
 
 LOGGING_LEVEL = logging.INFO
 
@@ -24,11 +20,13 @@ QUERY_SET = 15
 # DATASET_ID = "usdot-flights"
 # QUERY_SET = 4
 
-GENERATE_HDF_FILES = True  # force creation of new HDF files
+SUFFIXES = {"_10m": 10000000, "_100m": 100000000, "_1b": 1000000000}
+
+GENERATE_HDF_FILES = False  # force creation of new HDF files
 GENERATE_ENSEMBLE = True  # force creation of new ensembles
 
 HDF_MAX_ROWS = 10000000
-SAMPLES_PER_SPN = 100000
+SAMPLES_PER_SPN = 1000000
 CONFIDENCE_INTERVAL_ALPHA = 0.99
 BLOOM_FILTERS = False
 RDC_THRESHOLD = 0.3
@@ -39,6 +37,35 @@ PAIRWISE_RDC_PATH = None
 MAX_VARIANTS = 1
 MERGE_INDICATOR_EXP = True
 EXPLOIT_OVERLAPPING = True
+
+
+def get_schema(dataset_id, csv_path):
+    """Return SchemaGraph object for dataset based on JSON schema file."""
+    n_rows = None
+    sample_rate = 1
+    dataset_id_no_suffix = dataset_id
+    for suffix in SUFFIXES:
+        if suffix in dataset_id:
+            dataset_id_no_suffix = dataset_id_no_suffix.removesuffix(suffix)
+            n_rows = SUFFIXES[suffix]
+            sample_rate = min(1, HDF_MAX_ROWS / n_rows)
+    if n_rows is None:
+        dataset_id_no_suffix = dataset_id
+        n_rows = sum(1 for _ in open(csv_path)) - 1  # excludes header
+    filepath = os.path.join(DATA_DIR, "schemas", "aqp", f"{dataset_id_no_suffix}.json")
+    with open(filepath, "r") as f:
+        schema = json.load(f)
+    schema_graph = SchemaGraph()
+    schema_graph.add_table(
+        Table(
+            dataset_id.replace("-", "_"),
+            attributes=schema["column_names"],
+            csv_file_location=csv_path,
+            table_size=n_rows,
+            sample_rate=sample_rate,
+        )
+    )
+    return schema_graph, schema
 
 
 def get_relative_error_pct(true, predicted):
