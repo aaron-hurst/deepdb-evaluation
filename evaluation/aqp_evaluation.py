@@ -155,11 +155,8 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         query_str = query_str.strip()
         try:
             query = parse_query(query_str.strip(), schema)
-        except NotImplementedError as e:
-            logger.info(f"Could not parse query {query_no}: {e}")
-            continue
-        aqp_start_t = perf_counter()
-        confidence_intervals, aqp_result = spn_ensemble.evaluate_query(query, rdc_spn_selection=rdc_spn_selection,
+            aqp_start_t = perf_counter()
+            confidence_intervals, aqp_result = spn_ensemble.evaluate_query(query, rdc_spn_selection=rdc_spn_selection,
                                                                        pairwise_rdc_path=pairwise_rdc_path,
                                                                        merge_indicator_exp=merge_indicator_exp,
                                                                        max_variants=max_variants,
@@ -168,6 +165,14 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                                                                        confidence_intervals=show_confidence_intervals,
                                                                        confidence_sample_size=confidence_sample_size,
                                                                        confidence_interval_alpha=confidence_interval_alpha)
+        except (FloatingPointError, AssertionError) as e:
+            logger.warning(f"Error executing query {query_no}: {e}")
+            aqp_result = None
+            confidence_intervals = [None, None]
+        except NotImplementedError as e:
+            logger.warning(f"Could not parse query {query_no}: {e}")
+            aqp_result = None
+            confidence_intervals = [None, None]
         aqp_end_t = perf_counter()
         latency = aqp_end_t - aqp_start_t
         logger.debug(f"\t\t{'total_time:':<32}{latency} secs")
@@ -243,7 +248,7 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
         #                      })
         # else:
         #     logger.debug(f"\t\tpredicted: {aqp_result}")
-        
+
         n_queries_executed = n_queries_executed + 1
         if (n_queries_executed % 1000) == 0:
             logger.info("Queries executed: %d", n_queries_executed)

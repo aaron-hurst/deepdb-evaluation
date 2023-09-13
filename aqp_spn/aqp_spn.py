@@ -523,7 +523,10 @@ class AQPSPN(CombineSPN, RSPN):
                     ranges = _adapt_ranges(attribute_index, literal, ranges, inclusive=True, lower_than=False)
                 elif '=' in condition:
                     _, literal = condition.split('=', 1)
-                    literal = float(literal.strip())
+                    try:
+                        literal = float(literal.strip().replace("'", "").replace('"', ""))
+                    except ValueError as e:
+                        raise FloatingPointError(e)
 
                     def non_conflicting(single_numeric_range):
                         assert single_numeric_range[attribute_index] is None or \

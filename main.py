@@ -15,11 +15,29 @@ from evaluation.aqp_evaluation import evaluate_aqp_queries
 
 LOGGING_LEVEL = logging.INFO
 
-# DATASET_ID = "uci-household_power_consumption_synthetic"
-# QUERY_SET = 15
-DATASET_ID = "usdot-flights_synthetic"
-QUERY_SET = 4
-
+DATASETS = {
+    # "ampds-basement_plugs_and_lights": 2,
+    # "ampds-current": 2,
+    # "ampds-furnace_and_thermostat": 2,
+    # "chicago-taxi_trips_2020": 4,
+    # "kaggle-aquaponics": 4,
+    # "kaggle-light_detection": 2,
+    # "kaggle-smart_building_system": 2,
+    # "kaggle-temperature_iot_on_gcp": 4,
+    # "uci-gas_sensor_home_activity": 2,
+    # "uci-household_power_consumption": 2,
+    # "usdot-flights": 2,
+    # "uci-household_power_consumption": 15,
+    # "uci-household_power_consumption_synthetic": 15,
+    # "uci-household_power_consumption_10m": 15,
+    # "uci-household_power_consumption_100m": 15,
+    # "uci-household_power_consumption_1b": 15,
+    # "usdot-flights": 4,
+    # "usdot-flights_synthetic": 4,
+    # "usdot-flights_10m": 4,
+    # "usdot-flights_100m": 4,
+    # "usdot-flights_1b": 4,
+}
 SUFFIXES = {"_synthetic": None, "_10m": 10000000, "_100m": 100000000, "_1b": 1000000000}
 
 GENERATE_HDF_FILES = False  # force creation of new HDF files
@@ -88,38 +106,38 @@ def get_relative_bound_pct(true, ci_half_width):
         return 100
 
 
-def main():
-    logger.info(f"Analysing dataset: {DATASET_ID}")
+def test_dataset(dataset_id, query_set):
+    logger.info(f"Analysing dataset: {dataset_id}")
     logger.info(f"Samples per SPN: {SAMPLES_PER_SPN}")
 
     # Inputs
-    csv_path = os.path.join(DATA_DIR, "processed", f"{DATASET_ID}.csv")
-    queries_filepath = os.path.join(QUERIES_DIR, f"{DATASET_ID}_v{QUERY_SET}.txt")
+    csv_path = os.path.join(DATA_DIR, "processed", f"{dataset_id}.csv")
+    queries_filepath = os.path.join(QUERIES_DIR, f"{dataset_id}_v{query_set}.txt")
 
     # Outputs
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     output_dir = os.path.join(RESULTS_DIR, "aqp", "deepdb")
     hdf_filepath = os.path.join(
-        output_dir, "hdf", f"{DATASET_ID}_max_rows_{HDF_MAX_ROWS}.hdf"
+        output_dir, "hdf", f"{dataset_id}_max_rows_{HDF_MAX_ROWS}.hdf"
     )
     ensemble_filepath = os.path.join(
-        output_dir, "spn_ensembles", f"{DATASET_ID}_single_{SAMPLES_PER_SPN}.pkl"
+        output_dir, "spn_ensembles", f"{dataset_id}_single_{SAMPLES_PER_SPN}.pkl"
     )
     ground_truth_filepath = os.path.join(
-        QUERIES_DIR, "ground_truth", f"{DATASET_ID}_v{QUERY_SET}_gt.csv"
+        QUERIES_DIR, "ground_truth", f"{dataset_id}_v{query_set}_gt.csv"
     )
     results_path = os.path.join(
         output_dir,
         "results",
-        DATASET_ID,
+        dataset_id,
     )
-    results_name = f"queries_v{QUERY_SET}_sample_size_{SAMPLES_PER_SPN}_{timestamp}"
+    results_name = f"queries_v{query_set}_sample_size_{SAMPLES_PER_SPN}_{timestamp}"
     results_filepath = os.path.join(results_path, results_name + ".csv")
     metadata_filepath = os.path.join(results_path, results_name + "_metadata.txt")
 
     # Generate database schema
     logger.info("Generating schema...")
-    schema, _ = get_schema(DATASET_ID, csv_path)
+    schema, _ = get_schema(dataset_id, csv_path)
 
     # Generate HDF files for simpler sampling
     t_generate_hdf_start = perf_counter()
@@ -151,7 +169,7 @@ def main():
             hdf_filepath,
             SAMPLES_PER_SPN,
             ensemble_filepath,
-            DATASET_ID,
+            dataset_id,
             BLOOM_FILTERS,
             RDC_THRESHOLD,
             HDF_MAX_ROWS,
@@ -220,8 +238,8 @@ def main():
         mean_latency = 0
     with open(metadata_filepath, "w", newline="") as f:
         f.write("------------- Parameters -------------\n")
-        f.write(f"DATASET_ID                   {DATASET_ID}\n")
-        f.write(f"QUERIES_SET                  {QUERY_SET}\n")
+        f.write(f"DATASET_ID                   {dataset_id}\n")
+        f.write(f"QUERIES_SET                  {query_set}\n")
         f.write(f"GENERATE_HDF_FILES           {GENERATE_HDF_FILES}\n")
         f.write(f"GENERATE_ENSEMBLE            {GENERATE_ENSEMBLE}\n")
         f.write(f"HDF_MAX_ROWS                 {HDF_MAX_ROWS}\n")
@@ -248,6 +266,12 @@ def main():
         f.write("\n------------- Storage -------------\n")
         f.write(f"HDF files                    {s_hdf} bytes\n")
         f.write(f"SPN ensembles                {s_ensemble} bytes\n")
+    logger.info(f"Completed dataset {dataset_id} with query set {query_set}")
+
+
+def main():
+    for dataset_id, query_set in DATASETS.items():
+        test_dataset(dataset_id, query_set)
 
 
 if __name__ == "__main__":
