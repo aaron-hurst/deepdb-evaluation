@@ -42,6 +42,7 @@ SUFFIXES = {"_synthetic": None, "_10m": 10000000, "_100m": 100000000, "_1b": 100
 
 GENERATE_HDF_FILES = False  # force creation of new HDF files
 GENERATE_ENSEMBLE = True  # force creation of new ensembles
+INCLUDE_FAILED = False
 
 HDF_MAX_ROWS = 10000000
 SAMPLES_PER_SPN = 100000
@@ -203,6 +204,8 @@ def test_dataset(dataset_id, query_set):
     # Merge with ground truth data
     df_gt = pd.read_csv(ground_truth_filepath)
     df = pd.DataFrame(results)
+    if not INCLUDE_FAILED:
+        df = df.dropna()
     df = pd.merge(df, df_gt, how="left", on=["query_id"])
 
     # Compute error and bounds statistics

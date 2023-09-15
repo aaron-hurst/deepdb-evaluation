@@ -165,16 +165,17 @@ def evaluate_aqp_queries(ensemble_location, query_filename, target_path, schema,
                                                                        confidence_intervals=show_confidence_intervals,
                                                                        confidence_sample_size=confidence_sample_size,
                                                                        confidence_interval_alpha=confidence_interval_alpha)
+            latency = perf_counter() - aqp_start_t
         except (FloatingPointError, AssertionError) as e:
             logger.warning(f"Error executing query {query_no}: {e}")
             aqp_result = None
             confidence_intervals = [None, None]
+            latency = None
         except NotImplementedError as e:
             logger.warning(f"Could not parse query {query_no}: {e}")
             aqp_result = None
             confidence_intervals = [None, None]
-        aqp_end_t = perf_counter()
-        latency = aqp_end_t - aqp_start_t
+            latency = None
         logger.debug(f"\t\t{'total_time:':<32}{latency} secs")
 
         # Check if result is from a group by query
