@@ -16,17 +16,17 @@ from evaluation.aqp_evaluation import evaluate_aqp_queries
 LOGGING_LEVEL = logging.INFO
 
 DATASETS = {
-    # "ampds-basement_plugs_and_lights": 2,
-    # "ampds-current": 2,
-    # "ampds-furnace_and_thermostat": 2,
-    # "chicago-taxi_trips_2020": 4,
-    # "kaggle-aquaponics": 4,
-    # "kaggle-light_detection": 2,
-    # "kaggle-smart_building_system": 2,
-    # "kaggle-temperature_iot_on_gcp": 4,
-    # "uci-gas_sensor_home_activity": 2,
-    # "uci-household_power_consumption": 2,
-    # "usdot-flights": 2,
+    "ampds-basement_plugs_and_lights": 2,
+    "ampds-current": 2,
+    "ampds-furnace_and_thermostat": 2,
+    "chicago-taxi_trips_2020": 4,
+    "kaggle-aquaponics": 4,
+    "kaggle-light_detection": 2,
+    "kaggle-smart_building_system": 2,
+    "kaggle-temperature_iot_on_gcp": 4,
+    "uci-gas_sensor_home_activity": 2,
+    "uci-household_power_consumption": 2,
+    "usdot-flights": 2,
     # "uci-household_power_consumption": 15,
     # "uci-household_power_consumption_synthetic": 15,
     # "uci-household_power_consumption_10m": 15,
@@ -40,12 +40,14 @@ DATASETS = {
 }
 SUFFIXES = {"_synthetic": None, "_10m": 10000000, "_100m": 100000000, "_1b": 1000000000}
 
+SAMPLING_RANDOM_SEEDS = [15, 82, 6, 94, 67]
+
 GENERATE_HDF_FILES = False  # force creation of new HDF files
 GENERATE_ENSEMBLE = True  # force creation of new ensembles
-INCLUDE_FAILED = False
+INCLUDE_FAILED = True
 
 HDF_MAX_ROWS = 10000000
-SAMPLES_PER_SPN = 100000
+SAMPLES_PER_SPN = 10000
 CONFIDENCE_INTERVAL_ALPHA = 0.99
 BLOOM_FILTERS = False
 RDC_THRESHOLD = 0.3
@@ -107,7 +109,7 @@ def get_relative_bound_pct(true, ci_half_width):
         return 100
 
 
-def test_dataset(dataset_id, query_set):
+def test_dataset(dataset_id, query_set, random_seed):
     logger.info(f"Analysing dataset: {dataset_id}")
     logger.info(f"Samples per SPN: {SAMPLES_PER_SPN}")
 
@@ -176,6 +178,7 @@ def test_dataset(dataset_id, query_set):
             HDF_MAX_ROWS,
             POST_SAMPLING_FACTOR,
             incremental_learning_rate=INCREMENTAL_LEARNING_RATE,
+            random_seed=random_seed,
         )
     t_generate_ensemble = perf_counter() - t_generate_ensemble_start
 
@@ -274,7 +277,8 @@ def test_dataset(dataset_id, query_set):
 
 def main():
     for dataset_id, query_set in DATASETS.items():
-        test_dataset(dataset_id, query_set)
+        for random_seed in SAMPLING_RANDOM_SEEDS:
+            test_dataset(dataset_id, query_set, random_seed)
 
 
 if __name__ == "__main__":

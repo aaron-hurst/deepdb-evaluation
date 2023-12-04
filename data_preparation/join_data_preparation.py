@@ -4,6 +4,7 @@ import math
 import pickle
 import random
 
+import numpy as np
 import pandas as pd
 from spn.structure.StatisticalTypes import MetaType
 
@@ -237,7 +238,7 @@ class JoinDataPreparator:
         return sample_size_estimate, full_join_size
 
     def generate_n_samples(self, sample_size, post_sampling_factor=30, single_table=None, relationship_list=None,
-                           min_start_table_size=1, drop_redundant_columns=True):
+                           min_start_table_size=1, drop_redundant_columns=True, random_seed=42):
         """
         Generates approximately sample_size samples of join.
         :param sample_size:
@@ -256,10 +257,10 @@ class JoinDataPreparator:
             df_full_samples, meta_types, null_values = self.generate_join_sample(
                 single_table=single_table, relationship_list=relationship_list,
                 min_start_table_size=min_start_table_size, sample_rate=sample_rate,
-                drop_redundant_columns=drop_redundant_columns)
+                drop_redundant_columns=drop_redundant_columns, random_seed=random_seed)
 
             if len(df_full_samples) > sample_size:
-                df_full_samples = df_full_samples.sample(sample_size)
+                df_full_samples = df_full_samples.sample(sample_size, random_state=np.random.default_rng(random_seed))
             return df_full_samples, meta_types, null_values, full_join_size
 
         # No sampling required
@@ -269,11 +270,11 @@ class JoinDataPreparator:
                                                                              sample_rate=1.0,
                                                                              drop_redundant_columns=drop_redundant_columns)
         if len(df_full_samples) > sample_size:
-            return df_full_samples.sample(sample_size), meta_types, null_values, full_join_size
+            return df_full_samples.sample(sample_size, random_state=np.random.default_rng(random_seed)), meta_types, null_values, full_join_size
         return df_full_samples, meta_types, null_values, full_join_size
 
     def generate_n_samples_with_incremental_part(self, sample_size, post_sampling_factor=30, single_table=None, relationship_list=None,
-                           min_start_table_size=1, drop_redundant_columns=True, incremental_learning_rate=0, incremental_condition=None):
+                           min_start_table_size=1, drop_redundant_columns=True, incremental_learning_rate=0, incremental_condition=None, random_seed=42):
         """
         Generates approximately sample_size samples of join.
         :param sample_size:
@@ -299,7 +300,7 @@ class JoinDataPreparator:
                                                                              drop_redundant_columns=drop_redundant_columns)
 
         if len(df_full_samples) > sample_size:
-            df_full_samples = df_full_samples.sample(sample_size)
+            df_full_samples = df_full_samples.sample(sample_size, random_state=np.random.default_rng(random_seed))
 
         # split sample in initial learning and incremental learning part (if incremental_learning_rate > 0)
         #
@@ -329,7 +330,7 @@ class JoinDataPreparator:
 
     def generate_join_sample(self, single_table=None, relationship_list=None, min_start_table_size=1, sample_rate=1,
                              drop_redundant_columns=True, max_intermediate_size=math.inf,
-                             split_condition=None):
+                             split_condition=None, random_seed=42):
         """
         Samples from FULL OUTER JOIN to provide training data for SPN.
         """
@@ -342,7 +343,7 @@ class JoinDataPreparator:
 
             df_samples = self._get_table_data(self.table_meta_data[single_table]['hdf_path'], single_table)
             if sample_rate < 1:
-                df_samples = df_samples.sample(prob_round(len(df_samples) * sample_rate))
+                df_samples = df_samples.sample(prob_round(len(df_samples) * sample_rate), random_state=np.random.default_rng(random_seed))
 
             # remove unnecessary multipliers and replace nans
             del_mul_attributes = []
@@ -414,13 +415,13 @@ class JoinDataPreparator:
             logging.debug(f"reading first table '{start_table}'")
             df_samples = self._get_table_data(self.table_meta_data[start_table]['hdf_path'], start_table)
             if sample_rate < 1:
-                df_samples = df_samples.sample(prob_round(len(df_samples) * sample_rate))
+                df_samples = df_samples.sample(prob_round(len(df_samples) * sample_rate), random_state=np.random.default_rng(random_seed))
 
             joined_tables = {start_table}
 
             while len(todo_relationships) > 0:
                 if len(df_samples) > max_intermediate_size:
-                    df_samples = df_samples.sample(max_intermediate_size)
+                    df_samples = df_samples.sample(max_intermediate_size, random_state=np.random.default_rng(random_seed))
 
                 relationship_obj, outgoing = self._next_relationship(todo_relationships, joined_tables)
 
@@ -457,7 +458,9 @@ class JoinDataPreparator:
                         wo_join_partners = self._get_table_data(edge_information['path'], next_joined_table)
                         if sample_rate * start_table_sample_rate < 1:
                             wo_join_partners = wo_join_partners.sample(
-                                prob_round(len(wo_join_partners) * sample_rate * start_table_sample_rate))
+                                prob_round(len(wo_join_partners) * sample_rate * start_table_sample_rate),
+                                random_state=np.random.default_rng(random_seed)
+                            )
                         df_samples = pd.concat([df_samples, wo_join_partners])
                         del wo_join_partners
 
@@ -503,14 +506,16 @@ class JoinDataPreparator:
                                 next_table_data[incoming_edge_information['fk_attribute_name']] == null_value]
                         if sample_rate * start_table_sample_rate < 1:
                             wo_join_partners = wo_join_partners.sample(
-                                prob_round(len(wo_join_partners) * sample_rate * start_table_sample_rate))
+                                prob_round(len(wo_join_partners) * sample_rate * start_table_sample_rate),
+                                random_state=np.random.default_rng(random_seed)
+                            )
                         df_samples = pd.concat([df_samples, wo_join_partners])
 
                 joined_tables.add(next_joined_table)
                 todo_relationships.remove(relationship_obj.identifier)
 
             if len(df_samples) > max_intermediate_size:
-                df_samples = df_samples.sample(max_intermediate_size)
+                df_samples = df_samples.sample(max_intermediate_size, random_state=np.random.default_rng(random_seed))
 
             # remove unnecessary multipliers and replace nans
             mul_columns = []
@@ -681,7 +686,7 @@ def prepare_sample_hdf(schema, hdf_path, max_table_data, sample_size):
                         next_table_data[relationship_obj.end + '.' + relationship_obj.multiplier_attribute_name] > 0]
 
                 if len(next_table_data) > sample_size:
-                    next_table_data = next_table_data.sample(sample_size)
+                    next_table_data = next_table_data.sample(sample_size, random_state=np.random.default_rng(random_seed))
                 # only keep columns of interest
                 del_cols = []
                 for col in next_table_data.columns:
